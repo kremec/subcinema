@@ -62,6 +62,6 @@ enum class Screen {
     ENTRYBROWSER,
 }
 sealed class NavigationItem(val route: String) {
-    object Home : NavigationItem(Screen.HOME.name)
-    object EntryBrowser : NavigationItem(Screen.ENTRYBROWSER.name)
+    data object Home : NavigationItem(Screen.HOME.name)
+    data object EntryBrowser : NavigationItem(Screen.ENTRYBROWSER.name)
 }
