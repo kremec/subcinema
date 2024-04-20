@@ -1,4 +1,4 @@
-
+package com.subbyte.subcinema.entrybrowser
 import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import java.io.File
 
 
-class MainViewModel : ViewModel() {
+class EntryBrowserViewModel : ViewModel() {
 
     fun getRootPath() : String {
         return Environment.getExternalStorageDirectory().toString() + "/"
