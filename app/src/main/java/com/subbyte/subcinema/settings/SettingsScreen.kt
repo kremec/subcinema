@@ -1,4 +1,4 @@
-package com.subbyte.subcinema.home
+package com.subbyte.subcinema.settings
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -7,6 +7,6 @@ import androidx.tv.material3.Text
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    Text(text = "HOME")
+fun SettingsScreen(navController: NavHostController) {
+    Text(text = "SETTINGS")
 }

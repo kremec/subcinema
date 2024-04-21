@@ -33,16 +33,19 @@ import androidx.tv.foundation.lazy.list.items
 import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
+import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
 import kotlinx.coroutines.launch
 import java.lang.Integer.min
 
 @Composable
-fun EntryBrowserScreen(navController: NavHostController, entryBrowserViewModel: EntryBrowserViewModel = viewModel()) {
+fun EntryBrowserScreen(navController: NavHostController, defaultPath: String?, entryBrowserViewModel: EntryBrowserViewModel = viewModel()) {
 
-    val entriesPerPage = 7
+    val rootPath = defaultPath ?: entryBrowserViewModel.getRootLocalPath()
 
-    entryBrowserViewModel.openEntry(entryBrowserViewModel.getRootPath(), entriesPerPage)
+    val entriesPerPage = 8
+
+    entryBrowserViewModel.openEntry(rootPath, entriesPerPage)
     val entriesState by entryBrowserViewModel.entries.collectAsState()
     val numOfEntries by entryBrowserViewModel.numOfEntries.collectAsState()
 
@@ -54,12 +57,18 @@ fun EntryBrowserScreen(navController: NavHostController, entryBrowserViewModel: 
     val lazyListState = rememberTvLazyListState()
 
     fun openEntry(entry: Entry) {
-        entryBrowserViewModel.openEntry(entry.path, entriesPerPage)
-        scope.launch {
-            lazyListState.scrollToItem(0)
-            firstEntryFocusRequester.requestFocus()
+
+        if (entry.path.length < rootPath.length) {
+            navController.navigate(Screen.Home.route)
         }
-        focusedEntryIndex.intValue = 0
+        else {
+            entryBrowserViewModel.openEntry(entry.path, entriesPerPage)
+            scope.launch {
+                lazyListState.scrollToItem(0)
+                firstEntryFocusRequester.requestFocus()
+            }
+            focusedEntryIndex.intValue = 0
+        }
     }
 
     TvLazyColumn (
@@ -69,7 +78,7 @@ fun EntryBrowserScreen(navController: NavHostController, entryBrowserViewModel: 
             .onKeyEvent {
                 if (it.nativeKeyEvent.keyCode == NativeKeyEvent.KEYCODE_DPAD_DOWN && it.nativeKeyEvent.action == NativeKeyEvent.ACTION_DOWN) {
                     focusedEntryIndex.intValue++
-                    val lastVisibleEntryIndex = min(lazyListState.firstVisibleItemIndex + 7, numOfEntries-1)
+                    val lastVisibleEntryIndex = min(lazyListState.firstVisibleItemIndex + entriesPerPage, numOfEntries-1)
 
                     Log.d(
                         "subcinema",
@@ -100,15 +109,15 @@ fun EntryBrowserScreen(navController: NavHostController, entryBrowserViewModel: 
 
                     if (focusedEntryIndex.intValue <= lazyListState.firstVisibleItemIndex) {
                         if (focusedEntryIndex.intValue < 0) {
-                            Log.d("subcinema", "Loop up: ${(numOfEntries/7) * 7}")
+                            Log.d("subcinema", "Loop up: ${(numOfEntries/entriesPerPage) * entriesPerPage}")
                             scope.launch {
-                                lazyListState.scrollToItem((numOfEntries/7) * 7)
+                                lazyListState.scrollToItem((numOfEntries/entriesPerPage) * entriesPerPage)
                                 lastEntryFocusRequester.requestFocus()
                             }
                             focusedEntryIndex.intValue = numOfEntries-1
                         } else {
                             scope.launch {
-                                lazyListState.scrollToItem((focusedEntryIndex.intValue/7) * 7)
+                                lazyListState.scrollToItem((focusedEntryIndex.intValue/entriesPerPage) * entriesPerPage)
                             }
                         }
                     }
@@ -154,7 +163,7 @@ fun EntryRow(
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = "${entry.index} - ${entry.name}",
+                text = entry.name,
                 textAlign = TextAlign.Left
             )
         }

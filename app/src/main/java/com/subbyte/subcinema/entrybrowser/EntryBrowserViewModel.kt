@@ -10,7 +10,7 @@ import java.io.File
 
 class EntryBrowserViewModel : ViewModel() {
 
-    fun getRootPath() : String {
+    fun getRootLocalPath() : String {
         return Environment.getExternalStorageDirectory().toString() + "/"
     }
 
