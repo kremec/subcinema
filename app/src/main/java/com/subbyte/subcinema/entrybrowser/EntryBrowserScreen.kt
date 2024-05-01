@@ -1,6 +1,5 @@
 package com.subbyte.subcinema.entrybrowser
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Row
@@ -17,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.key.NativeKeyEvent
 import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,20 +36,30 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
+import com.subbyte.subcinema.utils.StorageUtil
 import kotlinx.coroutines.launch
 import java.lang.Integer.min
 
+enum class EntryBrowserType {
+    LOCAL,
+    SMB
+}
+
 @Composable
-fun EntryBrowserScreen(navController: NavHostController, defaultPath: String?, entryBrowserViewModel: EntryBrowserViewModel = viewModel()) {
+fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType) {
 
-    val rootPath = defaultPath ?: entryBrowserViewModel.getRootLocalPath()
+    val entryBrowserViewModel: EntryBrowserViewModel = viewModel()
+    entryBrowserViewModel.setType(type)
 
-    val entriesPerPage = 8
+    val rootPath = entryBrowserViewModel.getRootPath()
 
-    entryBrowserViewModel.openEntry(rootPath, entriesPerPage)
+    val entriesPerPage = StorageUtil.getData(StorageUtil.EntryBrowser_EntriesPerPage, 1)
+
+    entryBrowserViewModel.openEntry(rootPath, entriesPerPage, navController)
     val entriesState by entryBrowserViewModel.entries.collectAsState()
     val numOfEntries by entryBrowserViewModel.numOfEntries.collectAsState()
 
+    val focusManager = LocalFocusManager.current
     val firstEntryFocusRequester = remember { FocusRequester() }
     val lastEntryFocusRequester = remember { FocusRequester() }
     val focusedEntryIndex = remember { mutableIntStateOf(0) }
@@ -62,7 +73,7 @@ fun EntryBrowserScreen(navController: NavHostController, defaultPath: String?, e
             navController.navigate(Screen.Home.route)
         }
         else {
-            entryBrowserViewModel.openEntry(entry.path, entriesPerPage)
+            entryBrowserViewModel.openEntry(entry.path, entriesPerPage, navController)
             scope.launch {
                 lazyListState.scrollToItem(0)
                 firstEntryFocusRequester.requestFocus()
@@ -76,49 +87,47 @@ fun EntryBrowserScreen(navController: NavHostController, defaultPath: String?, e
             .fillMaxSize()
             .focusGroup()
             .onKeyEvent {
-                if (it.nativeKeyEvent.keyCode == NativeKeyEvent.KEYCODE_DPAD_DOWN && it.nativeKeyEvent.action == NativeKeyEvent.ACTION_DOWN) {
-                    focusedEntryIndex.intValue++
-                    val lastVisibleEntryIndex = min(lazyListState.firstVisibleItemIndex + entriesPerPage, numOfEntries-1)
+                if (it.nativeKeyEvent.action == NativeKeyEvent.ACTION_UP) {
+                    when (it.nativeKeyEvent.keyCode) {
+                        NativeKeyEvent.KEYCODE_DPAD_DOWN -> {
+                            focusedEntryIndex.intValue++
+                            val lastVisibleEntryIndex =
+                                min(lazyListState.firstVisibleItemIndex + entriesPerPage, numOfEntries - 1)
 
-                    Log.d(
-                        "subcinema",
-                        "Focused: ${focusedEntryIndex.intValue}, First: ${lazyListState.firstVisibleItemIndex}, Last: ${lastVisibleEntryIndex}, NumEntries: $numOfEntries"
-                    )
+                            if (focusedEntryIndex.intValue >= lastVisibleEntryIndex) {
+                                if (focusedEntryIndex.intValue == numOfEntries) {
 
-                    if (focusedEntryIndex.intValue >= lastVisibleEntryIndex) {
-                        if (focusedEntryIndex.intValue == numOfEntries) {
-
-                            scope.launch {
-                                lazyListState.scrollToItem(0)
-                                firstEntryFocusRequester.requestFocus()
-                            }
-                            focusedEntryIndex.intValue = 0
-                        } else {
-                            scope.launch {
-                                lazyListState.scrollToItem((focusedEntryIndex.intValue % numOfEntries - 1) + 1)
+                                    scope.launch {
+                                        lazyListState.scrollToItem(0)
+                                        firstEntryFocusRequester.requestFocus()
+                                    }
+                                    focusedEntryIndex.intValue = 0
+                                } else {
+                                    scope.launch {
+                                        lazyListState.scrollToItem((focusedEntryIndex.intValue % numOfEntries - 1) + 1)
+                                    }
+                                }
                             }
                         }
-                    }
-                } else if (it.nativeKeyEvent.keyCode == NativeKeyEvent.KEYCODE_DPAD_UP && it.nativeKeyEvent.action == NativeKeyEvent.ACTION_DOWN) {
-                    focusedEntryIndex.intValue--
+                        NativeKeyEvent.KEYCODE_DPAD_UP -> {
+                            focusedEntryIndex.intValue--
 
-                    Log.d(
-                        "subcinema",
-                        "Focused: ${focusedEntryIndex.intValue}, First: ${lazyListState.firstVisibleItemIndex}, NumEntries: $numOfEntries"
-                    )
-
-                    if (focusedEntryIndex.intValue <= lazyListState.firstVisibleItemIndex) {
-                        if (focusedEntryIndex.intValue < 0) {
-                            Log.d("subcinema", "Loop up: ${(numOfEntries/entriesPerPage) * entriesPerPage}")
-                            scope.launch {
-                                lazyListState.scrollToItem((numOfEntries/entriesPerPage) * entriesPerPage)
-                                lastEntryFocusRequester.requestFocus()
+                            if (focusedEntryIndex.intValue <= lazyListState.firstVisibleItemIndex) {
+                                if (focusedEntryIndex.intValue < 0) {
+                                    scope.launch {
+                                        lazyListState.scrollToItem((numOfEntries / entriesPerPage) * entriesPerPage)
+                                        lastEntryFocusRequester.requestFocus()
+                                    }
+                                    focusedEntryIndex.intValue = numOfEntries - 1
+                                } else {
+                                    scope.launch {
+                                        lazyListState.scrollToItem((focusedEntryIndex.intValue / entriesPerPage) * entriesPerPage)
+                                    }
+                                }
                             }
-                            focusedEntryIndex.intValue = numOfEntries-1
-                        } else {
-                            scope.launch {
-                                lazyListState.scrollToItem((focusedEntryIndex.intValue/entriesPerPage) * entriesPerPage)
-                            }
+                        }
+                        NativeKeyEvent.KEYCODE_SPACE -> {
+                            focusManager.moveFocus(FocusDirection.Left)
                         }
                     }
                 }

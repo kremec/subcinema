@@ -25,75 +25,86 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
+import com.subbyte.subcinema.entrybrowser.EntryBrowserType
 import com.subbyte.subcinema.home.HomeScreen
+import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun MainMenu(navController: NavHostController) {
 
-    val defaultSelection: Screen = Screen.EntryBrowser
+    val defaultSelection: Screen = Screen.Home
     var currentScreen by remember { mutableStateOf(defaultSelection) }
 
     val initialFocusRequester = remember { FocusRequester() }
 
-    NavigationDrawer(drawerContent = {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            TvLazyColumn(
+    NavigationDrawer(
+        drawerContent = {
+            Column(
                 modifier = Modifier
-                    .selectableGroup(),
+                    .fillMaxHeight()
+                    .padding(12.dp),
                 horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                items(screenList, key = { it.route }) { screen ->
-                    NavigationDrawerItem(
-                        modifier = (if (screen.title == Screen.Home.title) Modifier.focusRequester(initialFocusRequester) else Modifier),
-                        selected = currentScreen == screen,
-                        onClick = {
-                            currentScreen = screen
-                        },
-                        leadingContent = {
-                            Icon(
-                                imageVector = screen.icon,
-                                contentDescription = null,
-                            )
+                TvLazyColumn(
+                    modifier = Modifier
+                        .selectableGroup(),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
+                ) {
+                    items(screenList, key = { it.route }) { screen ->
+                        NavigationDrawerItem(
+                            modifier = (
+                                if (screen.title == Screen.Home.title)
+                                    Modifier.focusRequester(initialFocusRequester)
+                                else
+                                    Modifier
+                            ),
+                            selected = currentScreen == screen,
+                            onClick = { currentScreen = screen },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = screen.icon,
+                                    contentDescription = null,
+                                )
+                            }
+                        ) {
+                            Text(text = screen.title)
                         }
-                    ) {
-                        Text(text = screen.title)
                     }
                 }
-            }
 
-            NavigationDrawerItem(
-                selected = currentScreen == Screen.Settings,
-                onClick = {
-                    currentScreen = Screen.Settings
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Screen.Settings.icon,
-                        contentDescription = null,
-                    )
+                NavigationDrawerItem(
+                    selected = currentScreen == Screen.Settings,
+                    onClick = { currentScreen = Screen.Settings },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Screen.Settings.icon,
+                            contentDescription = null,
+                        )
+                    }
+                ) {
+                    Text(text = Screen.Settings.title)
                 }
-            ) {
-                Text(text = Screen.Settings.title)
             }
         }
-    }) {
+    ) {
 
         /* switching screens based on currentScreen changes */
         when (currentScreen) {
             Screen.Home -> {
                 HomeScreen(navController)
             }
-            Screen.EntryBrowser -> {
-                EntryBrowserScreen(navController, null)
+            Screen.LocalEntryBrowser -> {
+                EntryBrowserScreen(navController, EntryBrowserType.LOCAL)
+            }
+            Screen.SmbEntryBrowser -> {
+                EntryBrowserScreen(navController, EntryBrowserType.SMB)
+            }
+            Screen.MediaPlayer -> {
+                MediaPlayerScreen(navController, null)
             }
 
             Screen.Settings -> {

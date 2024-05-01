@@ -26,11 +26,23 @@ sealed class Screen(
         "Home",
         ""
     )
-    data object EntryBrowser: Screen(
-        "ENTRYBROWSERSCREEN",
+    data object SmbEntryBrowser: Screen(
+        "SMBENTRYBROWSERSCREEN",
+        Icons.Outlined.PlayArrow,
+        "NAS library",
+        "NAS files browser"
+    )
+    data object LocalEntryBrowser: Screen(
+        "LOCALENTRYBROWSERSCREEN",
         Icons.Outlined.PlayArrow,
         "Local library",
         "Local files browser"
+    )
+    data object MediaPlayer: Screen(
+        "MEDIAPLAYER",
+        Icons.Outlined.PlayArrow,
+        "Media player",
+        "Media player"
     )
 
     data object Settings : Screen(
@@ -43,5 +55,6 @@ sealed class Screen(
 
 val screenList = listOf(
     Screen.Home,
-    Screen.EntryBrowser,
+    Screen.SmbEntryBrowser,
+    Screen.LocalEntryBrowser,
 )
