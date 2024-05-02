@@ -1,5 +1,5 @@
 [versions]
-agp = "8.3.2"
+agp = "8.4.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.0"
 appcompat = "1.6.1"
@@ -16,6 +16,7 @@ datastorePreferences = "1.1.0"
 jcifs = "2.1.37"
 media3Exoplayer = "1.4.0-alpha01"
 media3Ui = "1.4.0-alpha01"
+libvlcAll = "4.0.0-eap15"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 jcifs = { group = "org.codelibs", name = "jcifs", version.ref = "jcifs" }
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3Ui" }
+libvlc-all = { group = "org.videolan.android", name = "libvlc-all", version.ref = "libvlcAll" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
