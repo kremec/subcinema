@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.URLConnection
 import java.util.Properties
 
 
@@ -50,7 +49,7 @@ class EntryBrowserViewModel() : ViewModel() {
     val entries: StateFlow<List<Entry>> = _entries
 
     private fun openMedia(mediaPath: String, navController: NavHostController) {
-        val subtitleEntries = entries.value.filter { entry -> URLConnection.guessContentTypeFromName(entry.path) == "application/x-subrip" }
+        val subtitleEntries = entries.value.filter { entry -> entry.name.endsWith(".srt") }
         val subtitlePaths: List<String> = subtitleEntries.map { it.path }
         val mediaArg = Media(mediaPath, subtitlePaths)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")

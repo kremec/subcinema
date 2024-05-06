@@ -18,6 +18,7 @@ import androidx.compose.ui.input.key.NativeKeyEvent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.StorageUtil
 import org.videolan.libvlc.LibVLC
@@ -42,7 +43,7 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
 
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            VideoPlayer(media.mediaPath, media.subtitlePaths)
+            VideoPlayer(media.mediaPath, media.subtitlePaths, navController)
         }
         else if (mimeType.startsWith("image")) {
             ImagePlayer(media.mediaPath)
@@ -51,7 +52,7 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
 }
 
 @Composable
-fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?) {
+fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?, navController: NavHostController) {
     val context = LocalContext.current
 
     val libVLC = LibVLC(context, ArrayList<String>().apply {
@@ -119,6 +120,16 @@ fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?) {
         }
     )
 
+    fun togglePlay() {
+        if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
+    }
+    fun exit() {
+        mediaPlayer.stop()
+        libVLC.release()
+        navController.navigate(Screen.MainMenu.route)
+        navController.navigate(Screen.MainMenu.route) // This is not an typo, without it it doesnt fully exit this screen
+    }
+
     LaunchedEffect(Unit) {
         mediaPlayer.play()
 <<<<<<< HEAD
@@ -127,11 +138,13 @@ fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?) {
         InputUtil.keyDownEvents.collect {
             if (it.action == NativeKeyEvent.ACTION_DOWN) {
                 when (it.keyCode) {
-                    NativeKeyEvent.KEYCODE_SPACE -> {
-                        if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
-                    }
+                    NativeKeyEvent.KEYCODE_DPAD_CENTER -> togglePlay()
                     NativeKeyEvent.KEYCODE_DPAD_RIGHT -> mediaPlayer.position += 0.01f
                     NativeKeyEvent.KEYCODE_DPAD_LEFT -> mediaPlayer.position -= 0.01f
+                    NativeKeyEvent.KEYCODE_BACK -> exit()
+
+                    NativeKeyEvent.KEYCODE_SPACE -> togglePlay()
+                    NativeKeyEvent.KEYCODE_ESCAPE -> exit()
                 }
             }
         }
