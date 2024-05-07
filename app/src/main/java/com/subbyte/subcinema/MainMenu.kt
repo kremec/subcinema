@@ -13,34 +13,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.items
-import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Icon
 import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
-import com.subbyte.subcinema.entrybrowser.EntryLocation
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
+import com.subbyte.subcinema.utils.EntryLocation
+import com.subbyte.subcinema.utils.NavUtil.homeMenuItemFocusRequester
+import com.subbyte.subcinema.utils.NavUtil.localentrybrowserMenuItemFocusRequester
+import com.subbyte.subcinema.utils.NavUtil.settingsMenuItemFocusRequester
+import com.subbyte.subcinema.utils.NavUtil.smbentrybrowserMenuItemFocusRequester
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun MainMenu(navController: NavHostController) {
+fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, openPath: String?) {
 
-    val defaultSelection: Screen = Screen.Home
+    val defaultSelection: Screen =
+        if (openPath == null) Screen.Home
+        else if (pathLocation == EntryLocation.LOCAL) Screen.LocalEntryBrowser
+        else Screen.SmbEntryBrowser
     var currentScreen by remember { mutableStateOf(defaultSelection) }
-
-    val homeMenuItemFocusRequester = remember { FocusRequester() }
-    val smbentrybrowserMenuItemFocusRequester = remember { FocusRequester() }
-    val localentrybrowserMenuItemFocusRequester = remember { FocusRequester() }
-    val settingsMenuItemFocusRequester = remember { FocusRequester() }
 
     NavigationDrawer(
         drawerContent = {
@@ -102,10 +101,20 @@ fun MainMenu(navController: NavHostController) {
                 HomeScreen(navController)
             }
             Screen.LocalEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryLocation.LOCAL, localentrybrowserMenuItemFocusRequester)
+                EntryBrowserScreen(
+                    navController,
+                    EntryLocation.LOCAL,
+                    localentrybrowserMenuItemFocusRequester,
+                    if (pathLocation == EntryLocation.LOCAL) openPath else null
+                )
             }
             Screen.SmbEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryLocation.SMB, smbentrybrowserMenuItemFocusRequester)
+                EntryBrowserScreen(
+                    navController,
+                    EntryLocation.SMB,
+                    smbentrybrowserMenuItemFocusRequester,
+                    if (pathLocation == EntryLocation.SMB) openPath else null
+                )
             }
             Screen.MediaPlayer -> {
                 MediaPlayerScreen(navController, null)
@@ -121,6 +130,12 @@ fun MainMenu(navController: NavHostController) {
     }
 
     LaunchedEffect(Unit) {
-        homeMenuItemFocusRequester.requestFocus()
+        if (openPath == null) homeMenuItemFocusRequester.requestFocus()
+        else if (pathLocation == EntryLocation.LOCAL) {
+            localentrybrowserMenuItemFocusRequester.requestFocus()
+        }
+        else {
+            smbentrybrowserMenuItemFocusRequester.requestFocus()
+        }
     }
 }

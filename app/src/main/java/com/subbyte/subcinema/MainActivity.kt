@@ -21,11 +21,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.tv.material3.Surface
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
-import com.subbyte.subcinema.entrybrowser.EntryLocation
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
 import com.subbyte.subcinema.ui.theme.SubcinemaTheme
+import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.NavUtil
 import com.subbyte.subcinema.utils.SettingsUtil
@@ -71,14 +71,32 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavHost(
     navController: NavHostController,
-    startDestination: String = Screen.MainMenu.route,
+    startDestination: String = "${Screen.MainMenu.route}/ / ",
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
     ) {
-        composable(Screen.MainMenu.route) {
-            MainMenu(navController)
+        composable(
+            route = "${Screen.MainMenu.route}/{pathlocation}/{openpath}",
+            arguments = listOf(
+                navArgument("pathlocation") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("openpath") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) {
+            val pathLocation = it.arguments?.getString("pathlocation", null)
+            val location =
+                if (pathLocation.isNullOrBlank()) null
+                else if (pathLocation == EntryLocation.LOCAL.name) EntryLocation.LOCAL
+                else EntryLocation.SMB
+            val openPath = it.arguments?.getString("openpath", null)
+            MainMenu(navController, location, if (openPath.isNullOrBlank()) null else NavUtil.deserializeString(openPath))
         }
 
         composable(Screen.Home.route) {
@@ -88,6 +106,7 @@ fun AppNavHost(
             EntryBrowserScreen(
                 navController,
                 EntryLocation.LOCAL,
+                null,
                 null
             )
         }
@@ -95,6 +114,7 @@ fun AppNavHost(
             EntryBrowserScreen(
                 navController,
                 EntryLocation.SMB,
+                null,
                 null
             )
         }

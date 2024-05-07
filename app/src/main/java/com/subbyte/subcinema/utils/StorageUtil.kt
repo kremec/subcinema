@@ -7,6 +7,11 @@ import jcifs.smb.NtlmPasswordAuthenticator
 import jcifs.smb.SmbFile
 import java.util.Properties
 
+enum class EntryLocation {
+    LOCAL,
+    SMB
+}
+
 object StorageUtil {
     fun getSmbFile(path: String): SmbFile {
         jcifs.Config.registerSmbURLHandler()
@@ -27,5 +32,17 @@ object StorageUtil {
             )
         )
         return smbFile
+    }
+
+    fun getEntryDirFromEntryPath(entryPath: String, mediaLocation: EntryLocation): String {
+        when (mediaLocation) {
+            EntryLocation.LOCAL -> {
+                return entryPath.removePrefix("file://").replaceAfterLast('/', "").removeSuffix("/")
+            }
+
+            EntryLocation.SMB -> {
+                return entryPath.replaceAfterLast('/', "")
+            }
+        }
     }
 }

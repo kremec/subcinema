@@ -8,10 +8,12 @@ import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
 import com.subbyte.subcinema.models.Media
+import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.NavUtil
 import com.subbyte.subcinema.utils.SettingsUtil
 import com.subbyte.subcinema.utils.StorageUtil
+import com.subbyte.subcinema.utils.StorageUtil.getEntryDirFromEntryPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,10 +52,11 @@ class EntryBrowserViewModel() : ViewModel() {
         for (i in entries.indices) entries[i].index = i
     }
 
+
     private fun openMedia(mediaPath: String, navController: NavHostController) {
         val subtitleEntries = entries.value.filter { entry -> entry.name.endsWith(".srt") }
         val subtitlePaths: List<String> = subtitleEntries.map { it.path }
-        val mediaArg = Media(mediaPath, subtitlePaths, type.value)
+        val mediaArg = Media(mediaPath, getEntryDirFromEntryPath(mediaPath, type.value), subtitlePaths, type.value)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
     }
     fun openEntry(newPath: String, navController: NavHostController) {

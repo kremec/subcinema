@@ -29,18 +29,15 @@ import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
+import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.SettingsUtil
-
-enum class EntryLocation {
-    LOCAL,
-    SMB
-}
 
 @Composable
 fun EntryBrowserScreen(
     navController: NavHostController,
     type: EntryLocation,
-    menuItemFocusRequester: FocusRequester?
+    menuItemFocusRequester: FocusRequester?,
+    openPath: String?
 ) {
 
     val entryBrowserViewModel: EntryBrowserViewModel = viewModel()
@@ -127,7 +124,7 @@ fun EntryBrowserScreen(
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-        entryBrowserViewModel.openEntry(rootPath, navController)
+        entryBrowserViewModel.openEntry(openPath ?: rootPath, navController)
     }
 >>>>>>> afa3f14 (EntryBrowserScreen refactor #2, working SMB)
 }

@@ -30,9 +30,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
-import com.subbyte.subcinema.entrybrowser.EntryLocation
+import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.InputUtil
+import com.subbyte.subcinema.utils.NavUtil
 import com.subbyte.subcinema.utils.SettingsUtil
 import com.subbyte.subcinema.utils.StorageUtil
 import jcifs.smb.SmbFileInputStream
@@ -51,26 +52,42 @@ import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
 
-
 @Composable
 fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subcinema.models.Media?) {
 
     if (media?.mediaPath == null) return
 
+
+    fun navigateBack() {
+        when (media.mediaLocation) {
+            EntryLocation.LOCAL -> {
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.LOCAL.name}/${NavUtil.serializeArgument(media.mediaDirPath)}")
+            }
+
+            EntryLocation.SMB -> {
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.SMB.name}/${NavUtil.serializeArgument(media.mediaDirPath)}")
+            }
+        }
+    }
+
     val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
 
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            VideoPlayer(media, navController)
+            VideoPlayer(media, navController, ::navigateBack)
         }
         else if (mimeType.startsWith("image")) {
-            ImagePlayer(media, navController)
+            ImagePlayer(media, navController, ::navigateBack)
         }
     }
 }
 
 @Composable
-fun VideoPlayer(videoMedia: com.subbyte.subcinema.models.Media, navController: NavHostController) {
+fun VideoPlayer(
+    videoMedia: com.subbyte.subcinema.models.Media,
+    navController: NavHostController,
+    navigateBack: () -> Unit
+) {
     val context = LocalContext.current
 
     val libVLC = LibVLC(context, ArrayList<String>().apply {
@@ -150,8 +167,8 @@ fun VideoPlayer(videoMedia: com.subbyte.subcinema.models.Media, navController: N
     fun exit() {
         mediaPlayer.stop()
         libVLC.release()
-        navController.navigate(Screen.MainMenu.route)
-        navController.navigate(Screen.MainMenu.route) // This is not an typo, without it it doesnt fully exit this screen
+        navigateBack()
+        navigateBack() // This is not an typo, without it it doesnt fully exit this screen
     }
 
     LaunchedEffect(Unit) {
@@ -196,7 +213,11 @@ fun handleVlcEvents(event: Event) {
 
 
 @Composable
-fun ImagePlayer(imageMedia: com.subbyte.subcinema.models.Media, navController: NavHostController) {
+fun ImagePlayer(
+    imageMedia: com.subbyte.subcinema.models.Media,
+    navController: NavHostController,
+    navigateBack: () -> Unit
+) {
 
     val bitmap = remember { mutableStateOf<Bitmap>(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) }
 
@@ -241,7 +262,7 @@ fun ImagePlayer(imageMedia: com.subbyte.subcinema.models.Media, navController: N
 
 
     fun exit() {
-        navController.navigate(Screen.MainMenu.route)
+        navigateBack()
     }
     LaunchedEffect(Unit) {
         InputUtil.keyDownEvents.collect {

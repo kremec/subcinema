@@ -1,6 +1,6 @@
 package com.subbyte.subcinema.models
 
-import com.subbyte.subcinema.entrybrowser.EntryLocation
+import com.subbyte.subcinema.utils.EntryLocation
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 data class Media(
     @SerialName("mediapath")
     val mediaPath: String,
+    @SerialName("mediadirpath")
+    val mediaDirPath: String,
     @SerialName("subtitlepaths")
     val subtitlePaths: List<String>,
     @SerialName("medialocation")
