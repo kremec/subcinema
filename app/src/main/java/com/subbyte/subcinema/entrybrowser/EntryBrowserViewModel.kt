@@ -43,6 +43,13 @@ class EntryBrowserViewModel() : ViewModel() {
     private val _entries = MutableStateFlow(listOf<Entry>())
     val entries: StateFlow<List<Entry>> = _entries
 
+    private fun sortEntries(entries: MutableList<Entry>) {
+        entries.sortWith { entry1, entry2 ->
+            entry1.name.compareTo(entry2.name, ignoreCase = true)
+        }
+        for (i in entries.indices) entries[i].index = i
+    }
+
     private fun openMedia(mediaPath: String, navController: NavHostController) {
         val subtitleEntries = entries.value.filter { entry -> entry.name.endsWith(".srt") }
         val subtitlePaths: List<String> = subtitleEntries.map { it.path }
@@ -70,6 +77,8 @@ class EntryBrowserViewModel() : ViewModel() {
                             result.add(Entry(index++, i, files[i].name, files[i].path.removeSuffix("/")))
                         }
                     }
+
+                    sortEntries(result)
 
                     _entries.value = result.toList()
                 }
@@ -103,6 +112,8 @@ class EntryBrowserViewModel() : ViewModel() {
                                     result.add(Entry(index++, i, files[i].name.removeSuffix("/"), files[i].path))
                                 }
                             }
+
+                            sortEntries(result)
 
                             _entries.value = result.toList()
                         }
