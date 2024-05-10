@@ -55,7 +55,7 @@ class EntryBrowserViewModel() : ViewModel() {
 
     private fun openMedia(mediaPath: String, navController: NavHostController) {
         val subtitleEntries = entries.value.filter { entry -> entry.name.endsWith(".srt") }
-        val subtitlePaths: List<String> = subtitleEntries.map { it.path }
+        val subtitlePaths: List<String> = subtitleEntries.map { if (type.value == EntryLocation.LOCAL) "file://${it.path}" else it.path }
         val mediaArg = Media(mediaPath, getEntryDirFromEntryPath(mediaPath, type.value), subtitlePaths, type.value)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
     }

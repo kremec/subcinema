@@ -381,7 +381,7 @@ fun VideoMenu(
     toggleMenu: () -> Unit,
     exit: () -> Unit
 ) {
-    val subtitleList = mutableListOf<Subtitle>()
+    val subtitleList = mutableListOf(Subtitle(SubtitleType.INTERNAL, -1, "No subtitles", ""))
     for (internalSubtitle in internalSubtitleTracks) {
         subtitleList.add(Subtitle(SubtitleType.INTERNAL, internalSubtitle.id, internalSubtitle.name, ""))
     }
@@ -390,15 +390,13 @@ fun VideoMenu(
     }
 >>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 
-    var selectedSubtitle by remember { mutableIntStateOf(if (subtitleList.isNotEmpty()) 0 else -1) }
+    var selectedSubtitle by remember { mutableIntStateOf(0) }
 
     fun saveSubtitle() {
         val subtitle = subtitleList[selectedSubtitle]
         externalSubtitlePath.value = subtitle.externalPath
         internalSubtitleTrackId.intValue = subtitle.internalId
     }
-
-    if (selectedSubtitle != -1) saveSubtitle()
 
     for(i in subtitleList.indices) {
         val subtitle = subtitleList[i]
@@ -434,15 +432,10 @@ fun VideoMenu(
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text =
-                    if (selectedSubtitle != -1) {
-                        val subtitle = subtitleList[selectedSubtitle]
-                        when (subtitle.type) {
-                            SubtitleType.INTERNAL -> subtitle.internalName
-                            SubtitleType.EXTERNAL -> subtitle.externalPath.substringAfterLast("/")
-                        }
-                    }
-                    else "",
+                text = when (subtitleList[selectedSubtitle].type) {
+                    SubtitleType.INTERNAL -> subtitleList[selectedSubtitle].internalName
+                    SubtitleType.EXTERNAL -> subtitleList[selectedSubtitle].externalPath.substringAfterLast("/")
+                },
                 textAlign = TextAlign.Left
             )
         }
@@ -452,27 +445,35 @@ fun VideoMenu(
         InputUtil.keyDownEvents.collect {
             if (it.action == NativeKeyEvent.ACTION_DOWN) {
                 when (it.keyCode) {
-                    NativeKeyEvent.KEYCODE_MENU -> toggleMenu()
-                    NativeKeyEvent.KEYCODE_BACK -> exit()
+                    NativeKeyEvent.KEYCODE_MENU ->  {
+                        saveSubtitle()
+                        toggleMenu()
+                    }
+                    NativeKeyEvent.KEYCODE_BACK -> {
+                        saveSubtitle()
+                        exit()
+                    }
 
                     NativeKeyEvent.KEYCODE_DPAD_RIGHT -> {
-                        if (selectedSubtitle != -1) {
-                            selectedSubtitle++
-                            if (selectedSubtitle == subtitleList.size) selectedSubtitle = 0
-                            println(selectedSubtitle)
-                        }
+                        selectedSubtitle++
+                        if (selectedSubtitle == subtitleList.size) selectedSubtitle = 0
+                        println(selectedSubtitle)
                     }
 
                     NativeKeyEvent.KEYCODE_DPAD_LEFT -> {
-                        if (selectedSubtitle != -1) {
-                            selectedSubtitle--
-                            if (selectedSubtitle == -1) selectedSubtitle = subtitleList.size-1
-                            println(selectedSubtitle)
-                        }
+                        selectedSubtitle--
+                        if (selectedSubtitle == -1) selectedSubtitle = subtitleList.size-1
+                        println(selectedSubtitle)
                     }
 
-                    NativeKeyEvent.KEYCODE_M -> toggleMenu()
-                    NativeKeyEvent.KEYCODE_ESCAPE -> exit()
+                    NativeKeyEvent.KEYCODE_M -> {
+                        saveSubtitle()
+                        toggleMenu()
+                    }
+                    NativeKeyEvent.KEYCODE_ESCAPE -> {
+                        saveSubtitle()
+                        exit()
+                    }
                 }
             }
         }
