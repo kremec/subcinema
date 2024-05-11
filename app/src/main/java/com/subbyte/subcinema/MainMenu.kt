@@ -25,7 +25,7 @@ import androidx.tv.material3.NavigationDrawer
 import androidx.tv.material3.NavigationDrawerItem
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
-import com.subbyte.subcinema.entrybrowser.EntryBrowserType
+import com.subbyte.subcinema.entrybrowser.EntryLocation
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
@@ -102,10 +102,10 @@ fun MainMenu(navController: NavHostController) {
                 HomeScreen(navController)
             }
             Screen.LocalEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryBrowserType.LOCAL, localentrybrowserMenuItemFocusRequester)
+                EntryBrowserScreen(navController, EntryLocation.LOCAL, localentrybrowserMenuItemFocusRequester)
             }
             Screen.SmbEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryBrowserType.SMB, smbentrybrowserMenuItemFocusRequester)
+                EntryBrowserScreen(navController, EntryLocation.SMB, smbentrybrowserMenuItemFocusRequester)
             }
             Screen.MediaPlayer -> {
                 MediaPlayerScreen(navController, null)

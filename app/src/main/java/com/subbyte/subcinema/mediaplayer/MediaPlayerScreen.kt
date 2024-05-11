@@ -1,30 +1,44 @@
 package com.subbyte.subcinema.mediaplayer
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.util.Log
 import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+<<<<<<< HEAD
 <<<<<<< HEAD
 import androidx.compose.ui.graphics.asImageBitmap
 <<<<<<< HEAD
 =======
 =======
 >>>>>>> edf31f7 (Setup error alerts, SettingsScreen overhaul)
+=======
+import androidx.compose.ui.graphics.asImageBitmap
+>>>>>>> f709910 (Fixed opening smb images, some formats unsupported (.MOV, .tif))
 import androidx.compose.ui.input.key.NativeKeyEvent
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
-import coil.request.ImageRequest
 import com.subbyte.subcinema.Screen
+import com.subbyte.subcinema.entrybrowser.EntryLocation
+import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.SettingsUtil
+import com.subbyte.subcinema.utils.StorageUtil
+import jcifs.smb.SmbFileInputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
@@ -34,6 +48,7 @@ import org.videolan.libvlc.MediaPlayer.Event
 import org.videolan.libvlc.interfaces.IMedia
 >>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
 import org.videolan.libvlc.util.VLCVideoLayout
+import java.io.File
 import java.net.URLConnection
 
 
@@ -46,16 +61,16 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
 
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            VideoPlayer(media.mediaPath, media.subtitlePaths, navController)
+            VideoPlayer(media, navController)
         }
         else if (mimeType.startsWith("image")) {
-            ImagePlayer(media.mediaPath, navController)
+            ImagePlayer(media, navController)
         }
     }
 }
 
 @Composable
-fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?, navController: NavHostController) {
+fun VideoPlayer(videoMedia: com.subbyte.subcinema.models.Media, navController: NavHostController) {
     val context = LocalContext.current
 
     val libVLC = LibVLC(context, ArrayList<String>().apply {
@@ -108,14 +123,14 @@ fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?, navController: 
         }
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
     }
-    Media(libVLC, Uri.parse(videoPath)).apply {
+    Media(libVLC, Uri.parse(videoMedia.mediaPath)).apply {
         // setHWDecoderEnabled(true, false) // Test differences with/without
         mediaPlayer.media = this
     }.release()
-    if (subtitlePaths?.isNotEmpty() == true) {
+    if (videoMedia.subtitlePaths.isNotEmpty() == true) {
         mediaPlayer.addSlave(
             IMedia.Slave.Type.Subtitle,
-            Uri.parse(subtitlePaths[0]),
+            Uri.parse(videoMedia.subtitlePaths[0]),
             true
         )
     }
@@ -181,22 +196,49 @@ fun handleVlcEvents(event: Event) {
 
 
 @Composable
-fun ImagePlayer(imagePath: String, navController: NavHostController) {
+fun ImagePlayer(imageMedia: com.subbyte.subcinema.models.Media, navController: NavHostController) {
 
-    val painter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(LocalContext.current)
-            .data(data = Uri.parse(imagePath))
-            .build(),
-        onError = {
-            Log.d("subcinema", it.toString())
+    val bitmap = remember { mutableStateOf<Bitmap>(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) }
+
+    when(imageMedia.mediaLocation) {
+        EntryLocation.LOCAL -> {
+            val imgFile = File(imageMedia.mediaPath.removePrefix("file://"))
+            val bitmapFile = BitmapFactory.decodeFile(imgFile.absolutePath)
+            bitmap.value = BitmapDrawable(LocalContext.current.resources, bitmapFile).bitmap
         }
-    )
+
+        EntryLocation.SMB -> {
+            val scope = rememberCoroutineScope()
+            LaunchedEffect(Unit) {
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        val smbImgFile = StorageUtil.getSmbFile(imageMedia.mediaPath)
+                        if (!smbImgFile.exists()) {
+                            ErrorUtil.showToast(navController.context, "Image cannot be opened")
+                            return@withContext
+                        }
+                        val inputStream = SmbFileInputStream(smbImgFile)
+                        val bytes = inputStream.readBytes()
+                        withContext(Dispatchers.Main) {
+                            val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                            if (bmp == null) {
+                                ErrorUtil.showToast(navController.context, "Image cannot be opened")
+                                return@withContext
+                            }
+                            bitmap.value = bmp
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Image(
-        painter = painter,
+        bitmap = bitmap.value.asImageBitmap(),
         contentDescription = null,
         modifier = Modifier.fillMaxSize()
     )
+
 
     fun exit() {
         navController.navigate(Screen.MainMenu.route)

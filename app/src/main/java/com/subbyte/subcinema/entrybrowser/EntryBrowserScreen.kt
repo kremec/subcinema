@@ -31,7 +31,7 @@ import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
 import com.subbyte.subcinema.utils.SettingsUtil
 
-enum class EntryBrowserType {
+enum class EntryLocation {
     LOCAL,
     SMB
 }
@@ -39,7 +39,7 @@ enum class EntryBrowserType {
 @Composable
 fun EntryBrowserScreen(
     navController: NavHostController,
-    type: EntryBrowserType,
+    type: EntryLocation,
     menuItemFocusRequester: FocusRequester?
 ) {
 

@@ -21,7 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.tv.material3.Surface
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
-import com.subbyte.subcinema.entrybrowser.EntryBrowserType
+import com.subbyte.subcinema.entrybrowser.EntryLocation
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
@@ -87,14 +87,14 @@ fun AppNavHost(
         composable(Screen.LocalEntryBrowser.route) {
             EntryBrowserScreen(
                 navController,
-                EntryBrowserType.LOCAL,
+                EntryLocation.LOCAL,
                 null
             )
         }
         composable(Screen.SmbEntryBrowser.route) {
             EntryBrowserScreen(
                 navController,
-                EntryBrowserType.SMB,
+                EntryLocation.SMB,
                 null
             )
         }

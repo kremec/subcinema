@@ -22,19 +22,19 @@ import java.io.File
 
 class EntryBrowserViewModel() : ViewModel() {
 
-    private val _type = mutableStateOf(EntryBrowserType.LOCAL)
-    val type: State<EntryBrowserType> = _type
-    fun setType(type: EntryBrowserType) {
+    private val _type = mutableStateOf(EntryLocation.LOCAL)
+    private val type: State<EntryLocation> = _type
+    fun setType(type: EntryLocation) {
         _type.value = type
     }
 
     fun getRootPath() : String {
         return when(type.value) {
-            EntryBrowserType.LOCAL -> {
+            EntryLocation.LOCAL -> {
                 Environment.getExternalStorageDirectory().toString()
             }
 
-            EntryBrowserType.SMB -> {
+            EntryLocation.SMB -> {
                 "smb://${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbDomain.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbRoot.key, SettingsUtil.EntryBrowser_SmbRoot.defaultValue)}"
             }
         }
@@ -46,14 +46,14 @@ class EntryBrowserViewModel() : ViewModel() {
     private fun openMedia(mediaPath: String, navController: NavHostController) {
         val subtitleEntries = entries.value.filter { entry -> entry.name.endsWith(".srt") }
         val subtitlePaths: List<String> = subtitleEntries.map { it.path }
-        val mediaArg = Media(mediaPath, subtitlePaths)
+        val mediaArg = Media(mediaPath, subtitlePaths, type.value)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
     }
     fun openEntry(newPath: String, navController: NavHostController) {
         val result = mutableListOf<Entry>()
 
         when(type.value) {
-            EntryBrowserType.LOCAL -> {
+            EntryLocation.LOCAL -> {
                 if (File(newPath).isFile) {
                     openMedia("file://$newPath", navController)
                     return
@@ -75,7 +75,7 @@ class EntryBrowserViewModel() : ViewModel() {
                 }
             }
 
-            EntryBrowserType.SMB -> {
+            EntryLocation.SMB -> {
                 var success = true
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
