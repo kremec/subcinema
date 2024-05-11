@@ -11,10 +11,10 @@ activityCompose = "1.9.0"
 material3Android = "1.2.1"
 lifecycleViewmodelCompose = "2.7.0"
 navigationCompose = "2.8.0-alpha08"
-datastore = "1.1.1"
 datastorePreferences = "1.1.1"
 jcifs = "2.1.37"
 libvlcAll = "4.0.0-eap15"
+kotlinxSerializationJson = "1.6.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,10 +31,10 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewmodelCompose" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
-androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 jcifs = { group = "org.codelibs", name = "jcifs", version.ref = "jcifs" }
 libvlc-all = { group = "org.videolan.android", name = "libvlc-all", version.ref = "libvlcAll" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

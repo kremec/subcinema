@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
+import com.subbyte.subcinema.models.Media
+import com.subbyte.subcinema.utils.NavUtil
 import com.subbyte.subcinema.utils.StorageUtil
 import jcifs.config.PropertyConfiguration
 import jcifs.context.BaseContext
@@ -20,8 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import java.net.URLConnection
 import java.util.Properties
 
 
@@ -48,6 +49,12 @@ class EntryBrowserViewModel() : ViewModel() {
     private val _entries = MutableStateFlow(listOf<Entry>())
     val entries: StateFlow<List<Entry>> = _entries
 
+    private fun openMedia(mediaPath: String, navController: NavHostController) {
+        val subtitleEntries = entries.value.filter { entry -> URLConnection.guessContentTypeFromName(entry.path) == "application/x-subrip" }
+        val subtitlePaths: List<String> = subtitleEntries.map { it.path }
+        val mediaArg = Media(mediaPath, subtitlePaths)
+        navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
+    }
     fun openEntry(newPath: String, navController: NavHostController) {
         val result = mutableListOf<Entry>()
         Log.d("subcinema", "Opening path: $newPath")
@@ -55,8 +62,7 @@ class EntryBrowserViewModel() : ViewModel() {
         when(type.value) {
             EntryBrowserType.LOCAL -> {
                 if (File(newPath).isFile) {
-                    val mediaUrl = URLEncoder.encode("file://$newPath", StandardCharsets.UTF_8.toString())
-                    navController.navigate("${Screen.MediaPlayer.route}/$mediaUrl")
+                    openMedia("file://$newPath", navController)
                     return
                 }
                 else {
@@ -68,7 +74,7 @@ class EntryBrowserViewModel() : ViewModel() {
                     val files = directory.listFiles()
                     if (files != null) {
                         for (i in files.indices) {
-                            result.add(Entry(index++, i, files[i].name, files[i].path))
+                            result.add(Entry(index++, i, files[i].name, files[i].path.removeSuffix("/")))
                         }
                     }
 
@@ -99,9 +105,8 @@ class EntryBrowserViewModel() : ViewModel() {
                         }
 
                         if (smbFile.isFile) {
-                            val mediaUrl = URLEncoder.encode(newPath, StandardCharsets.UTF_8.toString())
                             withContext(Dispatchers.Main) {
-                                navController.navigate("${Screen.MediaPlayer.route}/$mediaUrl")
+                                openMedia(newPath, navController)
                             }
                             return@withContext
                         }
@@ -109,13 +114,13 @@ class EntryBrowserViewModel() : ViewModel() {
                             smbFile.connect()
                             files = smbFile.listFiles()
 
-                            result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
+                            result.add(Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', "")))
                             var index = 1
 
                             if (files != null) {
                                 for (i in files!!.indices) {
                                     Log.d("subcinema", "SMB File: ${files!![i].name}")
-                                    result.add(Entry(index++, i, files!![i].name, files!![i].path))
+                                    result.add(Entry(index++, i, files!![i].name.removeSuffix("/"), files!![i].path))
                                 }
                             }
 

@@ -1,5 +1,6 @@
 package com.subbyte.subcinema
 
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
@@ -26,6 +27,7 @@ import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
 import com.subbyte.subcinema.ui.theme.SubcinemaTheme
 import com.subbyte.subcinema.utils.InputUtil
+import com.subbyte.subcinema.utils.NavUtil
 import com.subbyte.subcinema.utils.StorageUtil
 import kotlinx.coroutines.launch
 
@@ -37,6 +39,7 @@ class MainActivity : ComponentActivity() {
         val wic = WindowInsetsControllerCompat(window, window.decorView)
         wic.hide(WindowInsetsCompat.Type.statusBars())
         wic.hide(WindowInsetsCompat.Type.navigationBars())
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE // or SCREEN_ORIENTATION_LANDSCAPE
 
         StorageUtil.init(this)
 
@@ -88,14 +91,18 @@ fun AppNavHost(
             EntryBrowserScreen(navController, EntryBrowserType.SMB)
         }
         composable(
-            route="${Screen.MediaPlayer.route}/{mediaurl}",
+            route="${Screen.MediaPlayer.route}/{media}",
             arguments = listOf(
-                navArgument("mediaurl") {
+                navArgument("media") {
                     type = NavType.StringType
                 }
             )
         ) {
-            MediaPlayerScreen(navController, it.arguments?.getString("mediaurl", null))
+            val jsonStringMedia = it.arguments?.getString("media", null)
+            MediaPlayerScreen(
+                navController,
+                NavUtil.deserializeMedia(jsonStringMedia ?: "")
+            )
         }
 
         composable(Screen.Settings.route) {

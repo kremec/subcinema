@@ -23,47 +23,60 @@ import com.subbyte.subcinema.utils.StorageUtil
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
+<<<<<<< HEAD
+=======
+import org.videolan.libvlc.MediaPlayer.Event
+import org.videolan.libvlc.interfaces.IMedia
+>>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
 import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 
 @Composable
-fun MediaPlayerScreen(navController: NavHostController, path: String?) {
+fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subcinema.models.Media?) {
 
-    val mediaPath = URLDecoder.decode(path, StandardCharsets.UTF_8.toString()) ?: ""
-    val mimeType = URLConnection.guessContentTypeFromName(mediaPath)
+    if (media?.mediaPath == null) return
+
+    val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
 
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            VideoPlayer(mediaPath)
+            VideoPlayer(media.mediaPath, media.subtitlePaths)
         }
         else if (mimeType.startsWith("image")) {
-            ImagePlayer(mediaPath)
+            ImagePlayer(media.mediaPath)
         }
     }
 }
 
 @Composable
-fun VideoPlayer(videoPath: String) {
+fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?) {
     val context = LocalContext.current
 
     val libVLC = LibVLC(context, ArrayList<String>().apply {
-        add("--file-caching=1500")
-        add("--network-caching=150")
-        add("--live-caching=150")
+        add("--file-caching=6000")
+        add("--network-caching=6000")
+        add("--live-caching=6000")
+        add("--disc-caching=6000")
+        add("--sout-mux-caching=2000")
         add("--drop-late-frames")
         add("--skip-frames")
         add("--clock-jitter=0")
+
         add("--vout=android-display")
+<<<<<<< HEAD
 <<<<<<< HEAD
         //add("--rtsp-tcp")
         add("-vvv")
 =======
         add("--aout=android")
+=======
+        add("--aout=audiotrack") // Previously "android", "opensles" -> test difference
+        add("--subsdec-encoding=Windows-1250") // Other encodings: https://github.com/videolan/vlc/blob/master/modules/codec/subsdec.c
+>>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
         add("-vv")
+        add("--http-reconnect")
         add("--access=smb")
         add("--smb-domain=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, StorageUtil.DEFAULT_EntryBrowser_SmbDomain)}")
         add("--smb-user=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbUsername, StorageUtil.DEFAULT_EntryBrowser_SmbUsername)}")
@@ -86,9 +99,17 @@ fun VideoPlayer(videoPath: String) {
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
     }
     Media(libVLC, Uri.parse(videoPath)).apply {
-        setHWDecoderEnabled(true, false)
+        // setHWDecoderEnabled(true, false) // Test differences with/without
         mediaPlayer.media = this
     }.release()
+    if (subtitlePaths?.isNotEmpty() == true) {
+        mediaPlayer.addSlave(
+            IMedia.Slave.Type.Subtitle,
+            Uri.parse(subtitlePaths[0]),
+            true
+        )
+    }
+
 
     AndroidView(
         modifier = Modifier

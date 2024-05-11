@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -61,6 +62,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.jcifs)
     implementation(libs.libvlc.all)
+    implementation(libs.kotlinx.serialization.json)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
