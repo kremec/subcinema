@@ -35,22 +35,21 @@ class EntryBrowserViewModel() : ViewModel() {
     fun getRootPath() : String {
         return when(type.value) {
             EntryBrowserType.LOCAL -> {
-                Environment.getExternalStorageDirectory().toString() + "/"
+                Environment.getExternalStorageDirectory().toString()
             }
 
             EntryBrowserType.SMB -> {
-                ""
+                "/"
             }
         }
     }
 
     private val _entries = MutableStateFlow(listOf<Entry>())
     val entries: StateFlow<List<Entry>> = _entries
-    private val _numOfEntries = MutableStateFlow(0)
-    val numOfEntries: StateFlow<Int> = _numOfEntries
 
-    fun openEntry(newPath: String, entriesPerPage: Int, navController: NavHostController) {
+    fun openEntry(newPath: String, navController: NavHostController) {
         val result = mutableListOf<Entry>()
+        Log.d("subcinema", "New path: $newPath")
 
         when(type.value) {
             EntryBrowserType.LOCAL -> {
@@ -63,7 +62,6 @@ class EntryBrowserViewModel() : ViewModel() {
                 var index = 1
 
                 result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
-                Log.d("subcinema", "New path: $newPath")
 
                 val directory = File(newPath)
                 val files = directory.listFiles()
@@ -72,17 +70,13 @@ class EntryBrowserViewModel() : ViewModel() {
                         result.add(Entry(index++, i, files[i].name, files[i].path))
                     }
                 }
-                _numOfEntries.value = result.size
 
-                while (result.size % entriesPerPage != 0) {
-                    result.add(Entry(-1, -1, "", ""))
-                }
+                _entries.value = result.toList()
             }
             EntryBrowserType.SMB -> {
-                var files: Array<out SmbFile>? = null
+                var files: Array<out SmbFile>?
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
-                        Log.d("subcinema", "SMB FILE GETTER")
                         jcifs.Config.registerSmbURLHandler()
                         val config = PropertyConfiguration(
                             Properties().apply {
@@ -98,25 +92,21 @@ class EntryBrowserViewModel() : ViewModel() {
                         }
                         smbFile.connect()
                         files = smbFile.listFiles()
+
+                        result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
+                        var index = 1
+
+                        if (files != null) {
+                            for (i in files!!.indices) {
+                                Log.d("subcinema", "SMB File: ${files!![i].name}")
+                                result.add(Entry(index++, i, files!![i].name, files!![i].path))
+                            }
+                        }
+
+                        _entries.value = result.toList()
                     }
-                }
-
-                result.add(Entry(-1, -1, "", ""))
-                var index = 1
-
-                if (files != null) {
-                    for (i in files!!.indices) {
-                        result.add(Entry(index++, i, files!![i].name, files!![i].path))
-                    }
-                }
-                _numOfEntries.value = result.size
-
-                while (result.size % entriesPerPage != 0) {
-                    result.add(Entry(-1, -1, "", ""))
                 }
             }
         }
-
-        _entries.value = result.toList()
     }
 }
