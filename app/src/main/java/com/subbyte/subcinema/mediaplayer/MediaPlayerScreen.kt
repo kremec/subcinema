@@ -6,16 +6,30 @@ import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.view.View
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import androidx.compose.ui.graphics.Color
+>>>>>>> b1076a5 (View video information)
 import androidx.compose.ui.graphics.asImageBitmap
 <<<<<<< HEAD
 =======
@@ -25,8 +39,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 >>>>>>> f709910 (Fixed opening smb images, some formats unsupported (.MOV, .tif))
 import androidx.compose.ui.input.key.NativeKeyEvent
+<<<<<<< HEAD
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
+=======
+import androidx.compose.ui.platform.LocalConfiguration
+>>>>>>> b1076a5 (View video information)
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
@@ -52,11 +71,17 @@ import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
 
+fun timeFromMs(ms: Long): String {
+    val hours = (ms / 3600000)
+    val minutes = ((ms - hours*3600000) / 60000)
+    val seconds = ((ms - hours*3600000 - minutes*60000) / 1000)
+    return "%02d:%02d:%02d".format(hours, minutes, seconds)
+}
+
 @Composable
 fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subcinema.models.Media?) {
 
     if (media?.mediaPath == null) return
-
 
     fun navigateBack() {
         when (media.mediaLocation) {
@@ -71,7 +96,6 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
     }
 
     val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
-
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
             VideoPlayer(media, navController, ::navigateBack)
@@ -89,6 +113,9 @@ fun VideoPlayer(
     navigateBack: () -> Unit
 ) {
     val context = LocalContext.current
+
+    var mediaProgress by remember { mutableFloatStateOf(0F) }
+    var mediaLength by remember { mutableLongStateOf(0) }
 
     val libVLC = LibVLC(context, ArrayList<String>().apply {
         add("--file-caching=6000")
@@ -135,8 +162,12 @@ fun VideoPlayer(
         attachViews(vlcView, null, false, false)
 =======
         attachViews(vlcView, null, true, false)
-        setEventListener {
-            handleVlcEvents(it)
+        setEventListener { event ->
+            when (event.type) {
+                Event.PositionChanged -> {
+                    mediaProgress = this.position
+                }
+            }
         }
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
     }
@@ -144,7 +175,7 @@ fun VideoPlayer(
         // setHWDecoderEnabled(true, false) // Test differences with/without
         mediaPlayer.media = this
     }.release()
-    if (videoMedia.subtitlePaths.isNotEmpty() == true) {
+    if (videoMedia.subtitlePaths.isNotEmpty()) {
         mediaPlayer.addSlave(
             IMedia.Slave.Type.Subtitle,
             Uri.parse(videoMedia.subtitlePaths[0]),
@@ -152,23 +183,72 @@ fun VideoPlayer(
         )
     }
 
+    var showInfo by remember { mutableStateOf(false) }
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize(),
+            factory = {
+                vlcView
+            }
+        )
 
-    AndroidView(
-        modifier = Modifier
-            .fillMaxSize(),
-        factory = {
-            vlcView
+        if (showInfo) {
+            val padding5 = LocalConfiguration.current.screenWidthDp * 5 / 100
+            val padding2 = LocalConfiguration.current.screenWidthDp * 2 / 100
+
+            LinearProgressIndicator(
+                progress = { mediaProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(padding5.dp),
+            )
+
+            val elapsedMs = (mediaLength * mediaProgress).toLong()
+
+            Text(
+                text = timeFromMs(elapsedMs),
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding((padding5 + 10).dp),
+            )
+            Text(
+                text = timeFromMs(mediaLength),
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding((padding5 + 10).dp),
+            )
+
+            Text(
+                text = "${videoMedia.mediaLocation.name}: ${videoMedia.mediaPath.substringAfterLast("/")}",
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(padding2.dp),
+            )
         }
-    )
+    }
 
+
+    fun toggleInfo() {
+        mediaLength = mediaPlayer.length
+        showInfo = !showInfo
+    }
     fun togglePlay() {
         if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
+    }
+    fun updateMediaPlayerTime(ms: Long) {
+        mediaProgress = (mediaPlayer.time.toFloat() + ms.toFloat()) / mediaPlayer.length.toFloat()
+        mediaPlayer.time += ms
     }
     fun exit() {
         mediaPlayer.stop()
         libVLC.release()
         navigateBack()
-        navigateBack() // This is not an typo, without it it doesnt fully exit this screen
+        navigateBack() // This is not an typo, without it it doesn't fully exit this screen
     }
 
     LaunchedEffect(Unit) {
@@ -179,11 +259,15 @@ fun VideoPlayer(
         InputUtil.keyDownEvents.collect {
             if (it.action == NativeKeyEvent.ACTION_DOWN) {
                 when (it.keyCode) {
-                    NativeKeyEvent.KEYCODE_DPAD_CENTER -> togglePlay()
-                    NativeKeyEvent.KEYCODE_DPAD_RIGHT -> mediaPlayer.position += 0.01f
-                    NativeKeyEvent.KEYCODE_DPAD_LEFT -> mediaPlayer.position -= 0.01f
+                    NativeKeyEvent.KEYCODE_DPAD_CENTER -> toggleInfo()
+                    NativeKeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> togglePlay()
+                    NativeKeyEvent.KEYCODE_DPAD_RIGHT -> updateMediaPlayerTime(30000)
+                    NativeKeyEvent.KEYCODE_DPAD_LEFT -> updateMediaPlayerTime(-30000)
+                    NativeKeyEvent.KEYCODE_DPAD_UP -> updateMediaPlayerTime(180000)
+                    NativeKeyEvent.KEYCODE_DPAD_DOWN -> updateMediaPlayerTime(-180000)
                     NativeKeyEvent.KEYCODE_BACK -> exit()
 
+                    NativeKeyEvent.KEYCODE_I -> toggleInfo()
                     NativeKeyEvent.KEYCODE_SPACE -> togglePlay()
                     NativeKeyEvent.KEYCODE_ESCAPE -> exit()
                 }
@@ -198,6 +282,7 @@ fun VideoPlayer(
     }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 fun handleVlcEvents(event: Event) {
     when (event.type) {
@@ -210,6 +295,8 @@ fun handleVlcEvents(event: Event) {
     }
 }
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
+=======
+>>>>>>> b1076a5 (View video information)
 
 
 @Composable
