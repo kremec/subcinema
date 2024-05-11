@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
+import com.subbyte.subcinema.utils.StorageUtil
 import jcifs.config.PropertyConfiguration
 import jcifs.context.BaseContext
 import jcifs.context.CIFSContextWrapper
@@ -39,7 +40,7 @@ class EntryBrowserViewModel() : ViewModel() {
             }
 
             EntryBrowserType.SMB -> {
-                "/"
+                "smb://${StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, "")}${StorageUtil.getData(StorageUtil.EntryBrowser_SmbRoot, "")}"
             }
         }
     }
@@ -49,7 +50,7 @@ class EntryBrowserViewModel() : ViewModel() {
 
     fun openEntry(newPath: String, navController: NavHostController) {
         val result = mutableListOf<Entry>()
-        Log.d("subcinema", "New path: $newPath")
+        Log.d("subcinema", "Opening path: $newPath")
 
         when(type.value) {
             EntryBrowserType.LOCAL -> {
@@ -73,6 +74,7 @@ class EntryBrowserViewModel() : ViewModel() {
 
                 _entries.value = result.toList()
             }
+
             EntryBrowserType.SMB -> {
                 var files: Array<out SmbFile>?
                 viewModelScope.launch {
@@ -83,9 +85,13 @@ class EntryBrowserViewModel() : ViewModel() {
                                 setProperty("jcifs.smb.client.enableSMB2", "true")
                             }
                         )
-                        val smbAuth = NtlmPasswordAuthenticator("**DOMAIN**", "**USERNAME**", "**PASSWORD**")
-                        val smbFile = SmbFile("smb://${smbAuth.username}:${smbAuth.password}@${smbAuth.userDomain}/", CIFSContextWrapper(
-                            BaseContext(config)
+                        val smbAuth = NtlmPasswordAuthenticator(
+                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, ""),
+                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbUsername, ""),
+                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbPassword, "")
+                        )
+                        val smbFile = SmbFile(newPath, CIFSContextWrapper(
+                            BaseContext(config).withCredentials(smbAuth)
                         ))
                         if (!smbFile.exists()) {
                             Log.d("subcinema", "SMB FILE DOESN'T EXIST")

@@ -26,7 +26,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.items
-import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
@@ -44,7 +43,7 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
     entryBrowserViewModel.setType(type)
 
     val rootPath = entryBrowserViewModel.getRootPath()
-    val entriesPerPage = StorageUtil.getData(StorageUtil.EntryBrowser_EntriesPerPage, 1)
+    val entriesPerPage = StorageUtil.getData(StorageUtil.EntryBrowser_EntriesPerPage, StorageUtil.DEFAULT_EntryBrowser_EntriesPerPage)
 
     val entriesState by entryBrowserViewModel.entries.collectAsState()
 
@@ -124,7 +123,6 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
 >>>>>>> afa3f14 (EntryBrowserScreen refactor #2, working SMB)
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun EntryRow(
     entry: Entry,

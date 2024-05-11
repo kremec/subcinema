@@ -9,8 +9,21 @@ object StorageUtil {
         sharedPreferences = context.getSharedPreferences("Preferences_Settings", Context.MODE_PRIVATE)
     }
 
-
     val EntryBrowser_EntriesPerPage = "EntryBrowser_EntriesPerPage"
+    val DEFAULT_EntryBrowser_EntriesPerPage = 1
+
+    val EntryBrowser_SmbDomain = "EntryBrowser_SmbDomain"
+    val DEFAULT_EntryBrowser_SmbDomain = ""
+
+    val EntryBrowser_SmbRoot = "EntryBrowser_SmbRoot"
+    val DEFAULT_EntryBrowser_SmbRoot = ""
+
+    val EntryBrowser_SmbUsername = "EntryBrowser_SmbUsername"
+    val DEFAULT_EntryBrowser_SmbUsername = ""
+
+    val EntryBrowser_SmbPassword = "EntryBrowser_SmbPassword"
+    val DEFAULT_EntryBrowser_SmbPassword = ""
+
 
     inline fun <reified T> saveData(key: String, value: T) {
         val editor = sharedPreferences.edit()
