@@ -1,6 +1,7 @@
 package com.subbyte.subcinema
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.focusable
@@ -10,13 +11,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
 import com.subbyte.subcinema.entrybrowser.EntryBrowserType
@@ -24,11 +25,12 @@ import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
 import com.subbyte.subcinema.settings.SettingsScreen
 import com.subbyte.subcinema.ui.theme.SubcinemaTheme
+import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.StorageUtil
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalTvMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -50,6 +52,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        event?.let {
+            lifecycleScope.launch {
+                InputUtil._keyDownEvents.emit(it)
+            }
+        }
+
+        return super.onKeyDown(keyCode, event)
     }
 }
 

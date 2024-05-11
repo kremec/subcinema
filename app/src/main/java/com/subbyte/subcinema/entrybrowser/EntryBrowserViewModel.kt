@@ -55,24 +55,25 @@ class EntryBrowserViewModel() : ViewModel() {
         when(type.value) {
             EntryBrowserType.LOCAL -> {
                 if (File(newPath).isFile) {
-                    val mediaUrl = URLEncoder.encode(newPath, StandardCharsets.UTF_8.toString())
+                    val mediaUrl = URLEncoder.encode("file://$newPath", StandardCharsets.UTF_8.toString())
                     navController.navigate("${Screen.MediaPlayer.route}/$mediaUrl")
                     return
                 }
+                else {
+                    var index = 1
 
-                var index = 1
+                    result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
 
-                result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
-
-                val directory = File(newPath)
-                val files = directory.listFiles()
-                if (files != null) {
-                    for (i in files.indices) {
-                        result.add(Entry(index++, i, files[i].name, files[i].path))
+                    val directory = File(newPath)
+                    val files = directory.listFiles()
+                    if (files != null) {
+                        for (i in files.indices) {
+                            result.add(Entry(index++, i, files[i].name, files[i].path))
+                        }
                     }
-                }
 
-                _entries.value = result.toList()
+                    _entries.value = result.toList()
+                }
             }
 
             EntryBrowserType.SMB -> {
@@ -96,20 +97,30 @@ class EntryBrowserViewModel() : ViewModel() {
                         if (!smbFile.exists()) {
                             Log.d("subcinema", "SMB FILE DOESN'T EXIST")
                         }
-                        smbFile.connect()
-                        files = smbFile.listFiles()
 
-                        result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
-                        var index = 1
-
-                        if (files != null) {
-                            for (i in files!!.indices) {
-                                Log.d("subcinema", "SMB File: ${files!![i].name}")
-                                result.add(Entry(index++, i, files!![i].name, files!![i].path))
+                        if (smbFile.isFile) {
+                            val mediaUrl = URLEncoder.encode(newPath, StandardCharsets.UTF_8.toString())
+                            withContext(Dispatchers.Main) {
+                                navController.navigate("${Screen.MediaPlayer.route}/$mediaUrl")
                             }
+                            return@withContext
                         }
+                        else  {
+                            smbFile.connect()
+                            files = smbFile.listFiles()
 
-                        _entries.value = result.toList()
+                            result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
+                            var index = 1
+
+                            if (files != null) {
+                                for (i in files!!.indices) {
+                                    Log.d("subcinema", "SMB File: ${files!![i].name}")
+                                    result.add(Entry(index++, i, files!![i].name, files!![i].path))
+                                }
+                            }
+
+                            _entries.value = result.toList()
+                        }
                     }
                 }
             }

@@ -53,6 +53,8 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
     val endIndex = (startIndex + entriesPerPage).coerceAtMost(entriesState.size)
     val pageEntries = entriesState.subList(startIndex, endIndex)
 
+    val focusRequester = remember { FocusRequester() }
+
     fun openEntry(entry: Entry) {
         if (entry.path.length < rootPath.length) {
             navController.navigate(Screen.MainMenu.route)
@@ -62,7 +64,19 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
         }
     }
 
-    val focusRequester = remember { FocusRequester() }
+    fun moveDown() {
+        focusedEntryIndex.intValue++
+        if (focusedEntryIndex.intValue == entriesState.size) focusedEntryIndex.intValue = 0
+    }
+    fun moveUp() {
+        focusedEntryIndex.intValue--
+        if (focusedEntryIndex.intValue == -1) focusedEntryIndex.intValue = entriesState.size - 1
+    }
+    fun select() {
+        openEntry(entriesState[focusedEntryIndex.intValue])
+        focusedEntryIndex.intValue = 0
+        currentPage.intValue = 0
+    }
 
     TvLazyColumn (
         modifier = Modifier
@@ -72,21 +86,11 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
             .onKeyEvent {
                 if (it.nativeKeyEvent.action == NativeKeyEvent.ACTION_DOWN) {
                     when (it.nativeKeyEvent.keyCode) {
-                        NativeKeyEvent.KEYCODE_DPAD_DOWN -> {
-                            focusedEntryIndex.intValue++
-                            if (focusedEntryIndex.intValue == entriesState.size) focusedEntryIndex.intValue =
-                                0
-                        }
-                        NativeKeyEvent.KEYCODE_DPAD_UP -> {
-                            focusedEntryIndex.intValue--
-                            if (focusedEntryIndex.intValue == -1) focusedEntryIndex.intValue =
-                                entriesState.size - 1
-                        }
-                        NativeKeyEvent.KEYCODE_SPACE -> {
-                            openEntry(entriesState[focusedEntryIndex.intValue])
-                            focusedEntryIndex.intValue = 0
-                            currentPage.intValue = 0
-                        }
+                        NativeKeyEvent.KEYCODE_DPAD_DOWN -> moveDown()
+                        NativeKeyEvent.KEYCODE_DPAD_UP -> moveUp()
+                        NativeKeyEvent.KEYCODE_DPAD_CENTER -> select()
+
+                        NativeKeyEvent.KEYCODE_ENTER -> select()
                     }
                     currentPage.intValue = focusedEntryIndex.intValue / entriesPerPage
                 }
