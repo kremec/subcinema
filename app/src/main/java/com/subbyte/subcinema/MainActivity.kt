@@ -28,7 +28,7 @@ import com.subbyte.subcinema.settings.SettingsScreen
 import com.subbyte.subcinema.ui.theme.SubcinemaTheme
 import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.NavUtil
-import com.subbyte.subcinema.utils.StorageUtil
+import com.subbyte.subcinema.utils.SettingsUtil
 import kotlinx.coroutines.launch
 
 
@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         wic.hide(WindowInsetsCompat.Type.navigationBars())
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE // or SCREEN_ORIENTATION_LANDSCAPE
 
-        StorageUtil.init(this)
+        SettingsUtil.init(this)
 
         setContent {
             SubcinemaTheme {
@@ -85,10 +85,18 @@ fun AppNavHost(
             HomeScreen(navController)
         }
         composable(Screen.LocalEntryBrowser.route) {
-            EntryBrowserScreen(navController, EntryBrowserType.LOCAL)
+            EntryBrowserScreen(
+                navController,
+                EntryBrowserType.LOCAL,
+                null
+            )
         }
         composable(Screen.SmbEntryBrowser.route) {
-            EntryBrowserScreen(navController, EntryBrowserType.SMB)
+            EntryBrowserScreen(
+                navController,
+                EntryBrowserType.SMB,
+                null
+            )
         }
         composable(
             route="${Screen.MediaPlayer.route}/{media}",
@@ -106,7 +114,7 @@ fun AppNavHost(
         }
 
         composable(Screen.Settings.route) {
-            SettingsScreen(navController)
+            SettingsScreen(navController, null)
         }
     }
 }

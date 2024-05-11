@@ -63,6 +63,8 @@ dependencies {
     implementation(libs.jcifs)
     implementation(libs.libvlc.all)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.material.icons.extended)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)

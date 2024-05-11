@@ -1,55 +1,50 @@
 package com.subbyte.subcinema
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.PlayArrow
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screen(
     val route: String,
     val icon: ImageVector,
     val title: String,
-    val description: String
 ) {
     data object MainMenu : Screen(
         "MAINMENU",
-        Icons.Outlined.Menu,
+        Icons.Filled.Menu,
         "Main menu",
-        ""
     )
 
     data object Home : Screen(
         "HOMESCREEN",
-        Icons.Outlined.Home,
+        Icons.Filled.Home,
         "Home",
-        ""
     )
     data object SmbEntryBrowser: Screen(
         "SMBENTRYBROWSERSCREEN",
-        Icons.Outlined.PlayArrow,
+        Icons.Filled.Cloud,
         "NAS library",
-        "NAS files browser"
     )
     data object LocalEntryBrowser: Screen(
         "LOCALENTRYBROWSERSCREEN",
-        Icons.Outlined.PlayArrow,
+        Icons.Filled.VideoLibrary,
         "Local library",
-        "Local files browser"
     )
     data object MediaPlayer: Screen(
         "MEDIAPLAYER",
-        Icons.Outlined.PlayArrow,
+        Icons.Filled.PlayArrow,
         "Media player",
-        "Media player"
     )
 
     data object Settings : Screen(
         "SETTINGSSCREEN",
-        Icons.Outlined.Settings,
+        Icons.Filled.Settings,
         "Settings",
-        ""
     )
 }
 

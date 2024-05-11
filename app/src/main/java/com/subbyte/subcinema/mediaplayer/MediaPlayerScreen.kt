@@ -1,8 +1,7 @@
 package com.subbyte.subcinema.mediaplayer
 
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.util.Log
 import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,17 +9,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+<<<<<<< HEAD
 import androidx.compose.ui.graphics.asImageBitmap
 <<<<<<< HEAD
 =======
+=======
+>>>>>>> edf31f7 (Setup error alerts, SettingsScreen overhaul)
 import androidx.compose.ui.input.key.NativeKeyEvent
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.utils.InputUtil
-import com.subbyte.subcinema.utils.StorageUtil
+import com.subbyte.subcinema.utils.SettingsUtil
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
@@ -30,7 +34,6 @@ import org.videolan.libvlc.MediaPlayer.Event
 import org.videolan.libvlc.interfaces.IMedia
 >>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
 import org.videolan.libvlc.util.VLCVideoLayout
-import java.io.File
 import java.net.URLConnection
 
 
@@ -46,7 +49,7 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
             VideoPlayer(media.mediaPath, media.subtitlePaths, navController)
         }
         else if (mimeType.startsWith("image")) {
-            ImagePlayer(media.mediaPath)
+            ImagePlayer(media.mediaPath, navController)
         }
     }
 }
@@ -79,10 +82,16 @@ fun VideoPlayer(videoPath: String, subtitlePaths: List<String>?, navController: 
         add("-vv")
         add("--http-reconnect")
         add("--access=smb")
+<<<<<<< HEAD
         add("--smb-domain=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, StorageUtil.DEFAULT_EntryBrowser_SmbDomain)}")
         add("--smb-user=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbUsername, StorageUtil.DEFAULT_EntryBrowser_SmbUsername)}")
         add("--smb-pwd=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbPassword, StorageUtil.DEFAULT_EntryBrowser_SmbPassword)}")
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
+=======
+        add("--smb-domain=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbDomain.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}")
+        add("--smb-user=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbUsername.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}")
+        add("--smb-pwd=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbPassword.key, SettingsUtil.EntryBrowser_SmbPassword.defaultValue)}")
+>>>>>>> edf31f7 (Setup error alerts, SettingsScreen overhaul)
     })
     val vlcView = VLCVideoLayout(context).apply {
         keepScreenOn = true
@@ -170,16 +179,37 @@ fun handleVlcEvents(event: Event) {
 }
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
 
+
 @Composable
-fun ImagePlayer(imagePath: String) {
-    val imgFile = File(imagePath)
-    val bitmapFile = BitmapFactory.decodeFile(imgFile.absolutePath)
-    val bitmapDrawable = BitmapDrawable(LocalContext.current.resources, bitmapFile)
-    val bitmap = bitmapDrawable.bitmap.asImageBitmap()
+fun ImagePlayer(imagePath: String, navController: NavHostController) {
+
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(data = Uri.parse(imagePath))
+            .build(),
+        onError = {
+            Log.d("subcinema", it.toString())
+        }
+    )
 
     Image(
-        bitmap = bitmap,
+        painter = painter,
         contentDescription = null,
         modifier = Modifier.fillMaxSize()
     )
+
+    fun exit() {
+        navController.navigate(Screen.MainMenu.route)
+    }
+    LaunchedEffect(Unit) {
+        InputUtil.keyDownEvents.collect {
+            if (it.action == NativeKeyEvent.ACTION_DOWN) {
+                when (it.keyCode) {
+                    NativeKeyEvent.KEYCODE_BACK -> exit()
+
+                    NativeKeyEvent.KEYCODE_ESCAPE -> exit()
+                }
+            }
+        }
+    }
 }

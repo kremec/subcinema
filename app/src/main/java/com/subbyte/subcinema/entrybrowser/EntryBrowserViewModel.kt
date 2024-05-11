@@ -1,6 +1,5 @@
 package com.subbyte.subcinema.entrybrowser
 import android.os.Environment
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -9,20 +8,16 @@ import androidx.navigation.NavHostController
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
 import com.subbyte.subcinema.models.Media
+import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.NavUtil
+import com.subbyte.subcinema.utils.SettingsUtil
 import com.subbyte.subcinema.utils.StorageUtil
-import jcifs.config.PropertyConfiguration
-import jcifs.context.BaseContext
-import jcifs.context.CIFSContextWrapper
-import jcifs.smb.NtlmPasswordAuthenticator
-import jcifs.smb.SmbFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Properties
 
 
 class EntryBrowserViewModel() : ViewModel() {
@@ -40,7 +35,7 @@ class EntryBrowserViewModel() : ViewModel() {
             }
 
             EntryBrowserType.SMB -> {
-                "smb://${StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, "")}${StorageUtil.getData(StorageUtil.EntryBrowser_SmbRoot, "")}"
+                "smb://${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbDomain.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbRoot.key, SettingsUtil.EntryBrowser_SmbRoot.defaultValue)}"
             }
         }
     }
@@ -56,7 +51,6 @@ class EntryBrowserViewModel() : ViewModel() {
     }
     fun openEntry(newPath: String, navController: NavHostController) {
         val result = mutableListOf<Entry>()
-        Log.d("subcinema", "Opening path: $newPath")
 
         when(type.value) {
             EntryBrowserType.LOCAL -> {
@@ -82,25 +76,13 @@ class EntryBrowserViewModel() : ViewModel() {
             }
 
             EntryBrowserType.SMB -> {
-                var files: Array<out SmbFile>?
+                var success = true
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
-                        jcifs.Config.registerSmbURLHandler()
-                        val config = PropertyConfiguration(
-                            Properties().apply {
-                                setProperty("jcifs.smb.client.enableSMB2", "true")
-                            }
-                        )
-                        val smbAuth = NtlmPasswordAuthenticator(
-                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, ""),
-                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbUsername, ""),
-                            StorageUtil.getData(StorageUtil.EntryBrowser_SmbPassword, "")
-                        )
-                        val smbFile = SmbFile(newPath, CIFSContextWrapper(
-                            BaseContext(config).withCredentials(smbAuth)
-                        ))
+                        val smbFile = StorageUtil.getSmbFile(newPath)
                         if (!smbFile.exists()) {
-                            Log.d("subcinema", "SMB FILE DOESN'T EXIST")
+                            success = false
+                            return@withContext
                         }
 
                         if (smbFile.isFile) {
@@ -111,15 +93,14 @@ class EntryBrowserViewModel() : ViewModel() {
                         }
                         else  {
                             smbFile.connect()
-                            files = smbFile.listFiles()
+                            val files = smbFile.listFiles()
 
                             result.add(Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', "")))
                             var index = 1
 
                             if (files != null) {
-                                for (i in files!!.indices) {
-                                    Log.d("subcinema", "SMB File: ${files!![i].name}")
-                                    result.add(Entry(index++, i, files!![i].name.removeSuffix("/"), files!![i].path))
+                                for (i in files.indices) {
+                                    result.add(Entry(index++, i, files[i].name.removeSuffix("/"), files[i].path))
                                 }
                             }
 
@@ -127,6 +108,7 @@ class EntryBrowserViewModel() : ViewModel() {
                         }
                     }
                 }
+                if (!success) ErrorUtil.showToast(navController.context, "SMB path cannot be opened")
             }
         }
     }

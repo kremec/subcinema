@@ -37,7 +37,10 @@ fun MainMenu(navController: NavHostController) {
     val defaultSelection: Screen = Screen.Home
     var currentScreen by remember { mutableStateOf(defaultSelection) }
 
-    val initialFocusRequester = remember { FocusRequester() }
+    val homeMenuItemFocusRequester = remember { FocusRequester() }
+    val smbentrybrowserMenuItemFocusRequester = remember { FocusRequester() }
+    val localentrybrowserMenuItemFocusRequester = remember { FocusRequester() }
+    val settingsMenuItemFocusRequester = remember { FocusRequester() }
 
     NavigationDrawer(
         drawerContent = {
@@ -57,10 +60,10 @@ fun MainMenu(navController: NavHostController) {
                     items(screenList, key = { it.route }) { screen ->
                         NavigationDrawerItem(
                             modifier = (
-                                if (screen.title == Screen.Home.title)
-                                    Modifier.focusRequester(initialFocusRequester)
-                                else
-                                    Modifier
+                                if (screen.title == Screen.Home.title) Modifier.focusRequester(homeMenuItemFocusRequester)
+                                else if (screen.title == Screen.SmbEntryBrowser.title) Modifier.focusRequester(smbentrybrowserMenuItemFocusRequester)
+                                else if (screen.title == Screen.LocalEntryBrowser.title) Modifier.focusRequester(localentrybrowserMenuItemFocusRequester)
+                                else Modifier
                             ),
                             selected = currentScreen == screen,
                             onClick = { currentScreen = screen },
@@ -77,6 +80,7 @@ fun MainMenu(navController: NavHostController) {
                 }
 
                 NavigationDrawerItem(
+                    modifier = Modifier.focusRequester(settingsMenuItemFocusRequester),
                     selected = currentScreen == Screen.Settings,
                     onClick = { currentScreen = Screen.Settings },
                     leadingContent = {
@@ -98,17 +102,17 @@ fun MainMenu(navController: NavHostController) {
                 HomeScreen(navController)
             }
             Screen.LocalEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryBrowserType.LOCAL)
+                EntryBrowserScreen(navController, EntryBrowserType.LOCAL, localentrybrowserMenuItemFocusRequester)
             }
             Screen.SmbEntryBrowser -> {
-                EntryBrowserScreen(navController, EntryBrowserType.SMB)
+                EntryBrowserScreen(navController, EntryBrowserType.SMB, smbentrybrowserMenuItemFocusRequester)
             }
             Screen.MediaPlayer -> {
                 MediaPlayerScreen(navController, null)
             }
 
             Screen.Settings -> {
-                SettingsScreen(navController)
+                SettingsScreen(navController, settingsMenuItemFocusRequester)
             }
 
             Screen.MainMenu -> {}
@@ -117,6 +121,6 @@ fun MainMenu(navController: NavHostController) {
     }
 
     LaunchedEffect(Unit) {
-        initialFocusRequester.requestFocus()
+        homeMenuItemFocusRequester.requestFocus()
     }
 }

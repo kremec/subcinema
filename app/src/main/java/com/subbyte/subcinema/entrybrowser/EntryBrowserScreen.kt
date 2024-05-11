@@ -29,7 +29,7 @@ import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
-import com.subbyte.subcinema.utils.StorageUtil
+import com.subbyte.subcinema.utils.SettingsUtil
 
 enum class EntryBrowserType {
     LOCAL,
@@ -37,13 +37,17 @@ enum class EntryBrowserType {
 }
 
 @Composable
-fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType) {
+fun EntryBrowserScreen(
+    navController: NavHostController,
+    type: EntryBrowserType,
+    menuItemFocusRequester: FocusRequester?
+) {
 
     val entryBrowserViewModel: EntryBrowserViewModel = viewModel()
     entryBrowserViewModel.setType(type)
 
     val rootPath = entryBrowserViewModel.getRootPath()
-    val entriesPerPage = StorageUtil.getData(StorageUtil.EntryBrowser_EntriesPerPage, StorageUtil.DEFAULT_EntryBrowser_EntriesPerPage)
+    val entriesPerPage = SettingsUtil.getData(SettingsUtil.EntryBrowser_EntriesPerPage.key, SettingsUtil.EntryBrowser_EntriesPerPage.defaultValue) as Int
 
     val entriesState by entryBrowserViewModel.entries.collectAsState()
 
@@ -89,6 +93,7 @@ fun EntryBrowserScreen(navController: NavHostController, type: EntryBrowserType)
                         NativeKeyEvent.KEYCODE_DPAD_DOWN -> moveDown()
                         NativeKeyEvent.KEYCODE_DPAD_UP -> moveUp()
                         NativeKeyEvent.KEYCODE_DPAD_CENTER -> select()
+                        NativeKeyEvent.KEYCODE_DPAD_LEFT -> menuItemFocusRequester?.requestFocus()
 
                         NativeKeyEvent.KEYCODE_ENTER -> select()
                     }
