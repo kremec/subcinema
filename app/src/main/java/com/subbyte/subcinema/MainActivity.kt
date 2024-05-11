@@ -36,6 +36,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        System.loadLibrary("vlc")
+
         val wic = WindowInsetsControllerCompat(window, window.decorView)
         wic.hide(WindowInsetsCompat.Type.statusBars())
         wic.hide(WindowInsetsCompat.Type.navigationBars())

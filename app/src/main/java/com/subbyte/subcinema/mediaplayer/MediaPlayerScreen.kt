@@ -3,20 +3,23 @@ package com.subbyte.subcinema.mediaplayer
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
-import android.view.View
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +32,11 @@ import androidx.compose.ui.Modifier
 <<<<<<< HEAD
 =======
 import androidx.compose.ui.graphics.Color
+<<<<<<< HEAD
 >>>>>>> b1076a5 (View video information)
+=======
+import androidx.compose.ui.graphics.RectangleShape
+>>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import androidx.compose.ui.graphics.asImageBitmap
 <<<<<<< HEAD
 =======
@@ -40,48 +47,62 @@ import androidx.compose.ui.graphics.asImageBitmap
 >>>>>>> f709910 (Fixed opening smb images, some formats unsupported (.MOV, .tif))
 import androidx.compose.ui.input.key.NativeKeyEvent
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
 =======
 import androidx.compose.ui.platform.LocalConfiguration
 >>>>>>> b1076a5 (View video information)
+=======
+>>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
+import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
+import com.subbyte.subcinema.models.Subtitle
+import com.subbyte.subcinema.models.SubtitleType
 import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.InputUtil
 import com.subbyte.subcinema.utils.NavUtil
-import com.subbyte.subcinema.utils.SettingsUtil
 import com.subbyte.subcinema.utils.StorageUtil
+import com.subbyte.subcinema.utils.VlcUtil.externalSubtitlePath
+import com.subbyte.subcinema.utils.VlcUtil.initLibVlc
+import com.subbyte.subcinema.utils.VlcUtil.initMedia
+import com.subbyte.subcinema.utils.VlcUtil.initMediaPlayer
+import com.subbyte.subcinema.utils.VlcUtil.initVlcView
+import com.subbyte.subcinema.utils.VlcUtil.internalSubtitleTrackId
+import com.subbyte.subcinema.utils.VlcUtil.subtitleTracks
+import com.subbyte.subcinema.utils.VlcUtil.timeFromMs
 import jcifs.smb.SmbFileInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.videolan.libvlc.LibVLC
-import org.videolan.libvlc.Media
 import org.videolan.libvlc.MediaPlayer
+<<<<<<< HEAD
 <<<<<<< HEAD
 =======
 import org.videolan.libvlc.MediaPlayer.Event
 import org.videolan.libvlc.interfaces.IMedia
 >>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
+=======
+import org.videolan.libvlc.MediaPlayer.TrackDescription
+import org.videolan.libvlc.interfaces.IMedia.Meta
+>>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
-
-fun timeFromMs(ms: Long): String {
-    val hours = (ms / 3600000)
-    val minutes = ((ms - hours*3600000) / 60000)
-    val seconds = ((ms - hours*3600000 - minutes*60000) / 1000)
-    return "%02d:%02d:%02d".format(hours, minutes, seconds)
-}
 
 @Composable
 fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subcinema.models.Media?) {
 
     if (media?.mediaPath == null) return
+    subtitleTracks.clear()
+    internalSubtitleTrackId.intValue = -1
+    externalSubtitlePath.value = ""
 
     fun navigateBack() {
         when (media.mediaLocation) {
@@ -98,7 +119,11 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
     val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            VideoPlayer(media, navController, ::navigateBack)
+            val libVlc = initLibVlc(navController.context)
+            val vlcView = initVlcView(navController.context)
+            val mediaPlayer = initMediaPlayer(libVlc, vlcView)
+            initMedia(media, libVlc, mediaPlayer)
+            VideoPlayer(libVlc, vlcView, mediaPlayer, media, ::navigateBack)
         }
         else if (mimeType.startsWith("image")) {
             ImagePlayer(media, navController, ::navigateBack)
@@ -108,15 +133,17 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
 
 @Composable
 fun VideoPlayer(
+    libVlc: LibVLC,
+    vlcView: VLCVideoLayout,
+    mediaPlayer: MediaPlayer,
     videoMedia: com.subbyte.subcinema.models.Media,
-    navController: NavHostController,
     navigateBack: () -> Unit
 ) {
-    val context = LocalContext.current
 
     var mediaProgress by remember { mutableFloatStateOf(0F) }
     var mediaLength by remember { mutableLongStateOf(0) }
 
+<<<<<<< HEAD
     val libVLC = LibVLC(context, ArrayList<String>().apply {
         add("--file-caching=6000")
         add("--network-caching=6000")
@@ -183,59 +210,19 @@ fun VideoPlayer(
         )
     }
 
+=======
+>>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
     var showInfo by remember { mutableStateOf(false) }
-    Box(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier
-                .fillMaxSize(),
-            factory = {
-                vlcView
-            }
-        )
-
-        if (showInfo) {
-            val padding5 = LocalConfiguration.current.screenWidthDp * 5 / 100
-            val padding2 = LocalConfiguration.current.screenWidthDp * 2 / 100
-
-            LinearProgressIndicator(
-                progress = { mediaProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .padding(padding5.dp),
-            )
-
-            val elapsedMs = (mediaLength * mediaProgress).toLong()
-
-            Text(
-                text = timeFromMs(elapsedMs),
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding((padding5 + 10).dp),
-            )
-            Text(
-                text = timeFromMs(mediaLength),
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding((padding5 + 10).dp),
-            )
-
-            Text(
-                text = "${videoMedia.mediaLocation.name}: ${videoMedia.mediaPath.substringAfterLast("/")}",
-                color = Color.White,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(padding2.dp),
-            )
-        }
-    }
-
+    var showMenu by remember { mutableStateOf(false) }
 
     fun toggleInfo() {
         mediaLength = mediaPlayer.length
         showInfo = !showInfo
+    }
+    fun toggleMenu() {
+        showMenu = !showMenu
+        if (showMenu)
+            mediaPlayer.pause()
     }
     fun togglePlay() {
         if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
@@ -246,9 +233,36 @@ fun VideoPlayer(
     }
     fun exit() {
         mediaPlayer.stop()
-        libVLC.release()
+        libVlc.release()
         navigateBack()
         navigateBack() // This is not an typo, without it it doesn't fully exit this screen
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier
+                .fillMaxSize(),
+            factory = {
+                vlcView
+            }
+        )
+
+        if (showInfo) {
+            VideoInfo(
+                mediaPlayer,
+                videoMedia,
+                mediaLength,
+                mediaProgress
+            )
+        }
+        if (showMenu) {
+            VideoMenu(
+                subtitleTracks.toList(),
+                videoMedia.subtitlePaths,
+                ::toggleMenu,
+                ::exit
+            )
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -257,9 +271,10 @@ fun VideoPlayer(
 =======
 
         InputUtil.keyDownEvents.collect {
-            if (it.action == NativeKeyEvent.ACTION_DOWN) {
+            if (it.action == NativeKeyEvent.ACTION_DOWN && !showMenu) {
                 when (it.keyCode) {
                     NativeKeyEvent.KEYCODE_DPAD_CENTER -> toggleInfo()
+                    NativeKeyEvent.KEYCODE_MENU -> toggleMenu()
                     NativeKeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> togglePlay()
                     NativeKeyEvent.KEYCODE_DPAD_RIGHT -> updateMediaPlayerTime(30000)
                     NativeKeyEvent.KEYCODE_DPAD_LEFT -> updateMediaPlayerTime(-30000)
@@ -268,6 +283,7 @@ fun VideoPlayer(
                     NativeKeyEvent.KEYCODE_BACK -> exit()
 
                     NativeKeyEvent.KEYCODE_I -> toggleInfo()
+                    NativeKeyEvent.KEYCODE_M -> toggleMenu()
                     NativeKeyEvent.KEYCODE_SPACE -> togglePlay()
                     NativeKeyEvent.KEYCODE_ESCAPE -> exit()
                 }
@@ -277,10 +293,11 @@ fun VideoPlayer(
     }
     DisposableEffect(Unit) {
         onDispose {
-            libVLC.release()
+            libVlc.release()
         }
     }
 }
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 =======
@@ -297,7 +314,170 @@ fun handleVlcEvents(event: Event) {
 >>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
 =======
 >>>>>>> b1076a5 (View video information)
+=======
+@Composable
+fun VideoInfo(
+    mediaPlayer: MediaPlayer,
+    videoMedia: com.subbyte.subcinema.models.Media,
+    mediaLength: Long,
+    mediaProgress: Float
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        val mediaTitle = mediaPlayer.media?.getMeta(Meta.Title) ?: ""
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(0.25f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = mediaTitle,
+                    color = Color.White,
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(0.5f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                val elapsedMs = (mediaLength * mediaProgress).toLong()
+                Text(
+                    text = "${timeFromMs(elapsedMs)} / ${timeFromMs(mediaLength)}",
+                    color = Color.White,
+                )
+                LinearProgressIndicator(
+                    progress = { mediaProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    text = videoMedia.mediaPath.substringAfterLast("/"),
+                    color = Color.White,
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .weight(0.25f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "TEST2",
+                    color = Color.White,
+                )
+            }
+        }
+    }
+}
+@Composable
+fun VideoMenu(
+    internalSubtitleTracks: List<TrackDescription>,
+    externalSubtitlePaths: List<String>,
+    toggleMenu: () -> Unit,
+    exit: () -> Unit
+) {
+    val subtitleList = mutableListOf<Subtitle>()
+    for (internalSubtitle in internalSubtitleTracks) {
+        subtitleList.add(Subtitle(SubtitleType.INTERNAL, internalSubtitle.id, internalSubtitle.name, ""))
+    }
+    for (externalSubtitle in externalSubtitlePaths) {
+        subtitleList.add(Subtitle(SubtitleType.EXTERNAL, -1, "", externalSubtitle))
+    }
+>>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 
+    var selectedSubtitle by remember { mutableIntStateOf(if (subtitleList.isNotEmpty()) 0 else -1) }
+
+    fun saveSubtitle() {
+        val subtitle = subtitleList[selectedSubtitle]
+        externalSubtitlePath.value = subtitle.externalPath
+        internalSubtitleTrackId.intValue = subtitle.internalId
+    }
+
+    if (selectedSubtitle != -1) saveSubtitle()
+
+    for(i in subtitleList.indices) {
+        val subtitle = subtitleList[i]
+        when (subtitle.type) {
+            SubtitleType.INTERNAL -> {
+                if (internalSubtitleTrackId.intValue == subtitle.internalId) {
+                    selectedSubtitle = i
+                    break
+                }
+            }
+            SubtitleType.EXTERNAL -> {
+                if (externalSubtitlePath.value == subtitle.externalPath) {
+                    selectedSubtitle = i
+                    break
+                }
+            }
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(color = Color.Black),
+    ) {
+        TextButton(
+            modifier = Modifier
+                .fillMaxWidth(),
+            shape = RectangleShape,
+            onClick = {},
+            border = BorderStroke(1.dp, Color.White)
+        ) {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                text =
+                    if (selectedSubtitle != -1) {
+                        val subtitle = subtitleList[selectedSubtitle]
+                        when (subtitle.type) {
+                            SubtitleType.INTERNAL -> subtitle.internalName
+                            SubtitleType.EXTERNAL -> subtitle.externalPath.substringAfterLast("/")
+                        }
+                    }
+                    else "",
+                textAlign = TextAlign.Left
+            )
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        InputUtil.keyDownEvents.collect {
+            if (it.action == NativeKeyEvent.ACTION_DOWN) {
+                when (it.keyCode) {
+                    NativeKeyEvent.KEYCODE_MENU -> toggleMenu()
+                    NativeKeyEvent.KEYCODE_BACK -> exit()
+
+                    NativeKeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        if (selectedSubtitle != -1) {
+                            selectedSubtitle++
+                            if (selectedSubtitle == subtitleList.size) selectedSubtitle = 0
+                            println(selectedSubtitle)
+                        }
+                    }
+
+                    NativeKeyEvent.KEYCODE_DPAD_LEFT -> {
+                        if (selectedSubtitle != -1) {
+                            selectedSubtitle--
+                            if (selectedSubtitle == -1) selectedSubtitle = subtitleList.size-1
+                            println(selectedSubtitle)
+                        }
+                    }
+
+                    NativeKeyEvent.KEYCODE_M -> toggleMenu()
+                    NativeKeyEvent.KEYCODE_ESCAPE -> exit()
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun ImagePlayer(
