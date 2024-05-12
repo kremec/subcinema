@@ -101,23 +101,6 @@ fun EntryBrowserScreen(
         userScrollEnabled = false
     ) {
         items(pageEntries) { entry ->
-<<<<<<< HEAD
-            EntryRow(
-<<<<<<< HEAD
-                entry, (if (entry.index == 0) Modifier.focusRequester(firstEntryFocusRequester) else if (entry.index == numOfEntries-1) Modifier.focusRequester(lastEntryFocusRequester) else Modifier)
-            ) { openEntry(entry) }
-        }
-    }
-    LaunchedEffect(Unit) {
-        firstEntryFocusRequester.requestFocus()
-    }
-=======
-                entry, focusedEntryIndex
-            ) { openEntry(entry) }
-        }
-    }
->>>>>>> 38c6efa (EntryBrowserScreen refactor)
-=======
             EntryRow(entry, focusedEntryIndex)
         }
     }
@@ -126,7 +109,6 @@ fun EntryBrowserScreen(
         focusRequester.requestFocus()
         entryBrowserViewModel.openEntry(openPath ?: rootPath, navController)
     }
->>>>>>> afa3f14 (EntryBrowserScreen refactor #2, working SMB)
 }
 
 @Composable

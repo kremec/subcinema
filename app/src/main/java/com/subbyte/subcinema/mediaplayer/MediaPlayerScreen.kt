@@ -27,33 +27,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 import androidx.compose.ui.graphics.Color
-<<<<<<< HEAD
->>>>>>> b1076a5 (View video information)
-=======
 import androidx.compose.ui.graphics.RectangleShape
->>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import androidx.compose.ui.graphics.asImageBitmap
-<<<<<<< HEAD
-=======
-=======
->>>>>>> edf31f7 (Setup error alerts, SettingsScreen overhaul)
-=======
-import androidx.compose.ui.graphics.asImageBitmap
->>>>>>> f709910 (Fixed opening smb images, some formats unsupported (.MOV, .tif))
 import androidx.compose.ui.input.key.NativeKeyEvent
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
-=======
-import androidx.compose.ui.platform.LocalConfiguration
->>>>>>> b1076a5 (View video information)
-=======
->>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -82,16 +59,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.videolan.libvlc.LibVLC
 import org.videolan.libvlc.MediaPlayer
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import org.videolan.libvlc.MediaPlayer.Event
-import org.videolan.libvlc.interfaces.IMedia
->>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
-=======
 import org.videolan.libvlc.MediaPlayer.TrackDescription
 import org.videolan.libvlc.interfaces.IMedia.Meta
->>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
@@ -143,75 +112,6 @@ fun VideoPlayer(
     var mediaProgress by remember { mutableFloatStateOf(0F) }
     var mediaLength by remember { mutableLongStateOf(0) }
 
-<<<<<<< HEAD
-    val libVLC = LibVLC(context, ArrayList<String>().apply {
-        add("--file-caching=6000")
-        add("--network-caching=6000")
-        add("--live-caching=6000")
-        add("--disc-caching=6000")
-        add("--sout-mux-caching=2000")
-        add("--drop-late-frames")
-        add("--skip-frames")
-        add("--clock-jitter=0")
-
-        add("--vout=android-display")
-<<<<<<< HEAD
-<<<<<<< HEAD
-        //add("--rtsp-tcp")
-        add("-vvv")
-=======
-        add("--aout=android")
-=======
-        add("--aout=audiotrack") // Previously "android", "opensles" -> test difference
-        add("--subsdec-encoding=Windows-1250") // Other encodings: https://github.com/videolan/vlc/blob/master/modules/codec/subsdec.c
->>>>>>> 280993d (Added subtitles (currently only choosing the first), better navigation arguments)
-        add("-vv")
-        add("--http-reconnect")
-        add("--access=smb")
-<<<<<<< HEAD
-        add("--smb-domain=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbDomain, StorageUtil.DEFAULT_EntryBrowser_SmbDomain)}")
-        add("--smb-user=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbUsername, StorageUtil.DEFAULT_EntryBrowser_SmbUsername)}")
-        add("--smb-pwd=${StorageUtil.getData(StorageUtil.EntryBrowser_SmbPassword, StorageUtil.DEFAULT_EntryBrowser_SmbPassword)}")
->>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
-=======
-        add("--smb-domain=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbDomain.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}")
-        add("--smb-user=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbUsername.key, SettingsUtil.EntryBrowser_SmbDomain.defaultValue)}")
-        add("--smb-pwd=${SettingsUtil.getData(SettingsUtil.EntryBrowser_SmbPassword.key, SettingsUtil.EntryBrowser_SmbPassword.defaultValue)}")
->>>>>>> edf31f7 (Setup error alerts, SettingsScreen overhaul)
-    })
-    val vlcView = VLCVideoLayout(context).apply {
-        keepScreenOn = true
-        fitsSystemWindows = false
-        visibility = View.VISIBLE
-    }
-    val mediaPlayer = MediaPlayer(libVLC).apply {
-<<<<<<< HEAD
-        attachViews(vlcView, null, false, false)
-=======
-        attachViews(vlcView, null, true, false)
-        setEventListener { event ->
-            when (event.type) {
-                Event.PositionChanged -> {
-                    mediaProgress = this.position
-                }
-            }
-        }
->>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
-    }
-    Media(libVLC, Uri.parse(videoMedia.mediaPath)).apply {
-        // setHWDecoderEnabled(true, false) // Test differences with/without
-        mediaPlayer.media = this
-    }.release()
-    if (videoMedia.subtitlePaths.isNotEmpty()) {
-        mediaPlayer.addSlave(
-            IMedia.Slave.Type.Subtitle,
-            Uri.parse(videoMedia.subtitlePaths[0]),
-            true
-        )
-    }
-
-=======
->>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
     var showInfo by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
@@ -267,8 +167,6 @@ fun VideoPlayer(
 
     LaunchedEffect(Unit) {
         mediaPlayer.play()
-<<<<<<< HEAD
-=======
 
         InputUtil.keyDownEvents.collect {
             if (it.action == NativeKeyEvent.ACTION_DOWN && !showMenu) {
@@ -289,7 +187,6 @@ fun VideoPlayer(
                 }
             }
         }
->>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
     }
     DisposableEffect(Unit) {
         onDispose {
@@ -297,24 +194,6 @@ fun VideoPlayer(
         }
     }
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-fun handleVlcEvents(event: Event) {
-    when (event.type) {
-        Event.Playing -> {
-
-        }
-        Event.Paused -> {
-
-        }
-    }
-}
->>>>>>> 6e7f076 (Fixed audio issues, added simple video controls)
-=======
->>>>>>> b1076a5 (View video information)
-=======
 @Composable
 fun VideoInfo(
     mediaPlayer: MediaPlayer,
@@ -388,7 +267,6 @@ fun VideoMenu(
     for (externalSubtitle in externalSubtitlePaths) {
         subtitleList.add(Subtitle(SubtitleType.EXTERNAL, -1, "", externalSubtitle))
     }
->>>>>>> 1ad2f83 (VideoPlayer rework,built-in subtitle support (local subtitle files broken))
 
     var selectedSubtitle by remember { mutableIntStateOf(0) }
 
