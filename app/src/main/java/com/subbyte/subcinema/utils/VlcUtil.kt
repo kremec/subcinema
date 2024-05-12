@@ -51,13 +51,17 @@ object VlcUtil {
             visibility = View.VISIBLE
         }
     }
-    fun initMediaPlayer(libVlc: LibVLC, vlcView: VLCVideoLayout): MediaPlayer {
+    fun initMediaPlayer(
+        libVlc: LibVLC,
+        vlcView: VLCVideoLayout,
+        setMediaProgress: (Float) -> Unit
+    ): MediaPlayer {
         return MediaPlayer(libVlc).apply {
             attachViews(vlcView, null, true, false)
             setEventListener { event ->
                 when (event.type) {
                     MediaPlayer.Event.PositionChanged -> {
-                        //mediaProgress = this.position //TODO
+                        setMediaProgress(position)
                     }
                     MediaPlayer.Event.Playing -> {
                         setSubtitles(this)
@@ -66,14 +70,20 @@ object VlcUtil {
             }
         }
     }
-    fun initMedia(videoMedia: com.subbyte.subcinema.models.Media, libVlc: LibVLC, mediaPlayer: MediaPlayer) {
+    fun initMedia(
+        videoMedia: com.subbyte.subcinema.models.Media,
+        libVlc: LibVLC,
+        mediaPlayer: MediaPlayer
+    ) {
         Media(libVlc, Uri.parse(videoMedia.mediaPath)).apply {
             parse()
             setEventListener {
                 when (it.type) {
                     IMedia.Event.ParsedChanged -> {
-                        for (track in mediaPlayer.spuTracks)
-                            subtitleTracks.add(track)
+                        if (mediaPlayer.spuTracks != null) {
+                            for (track in mediaPlayer.spuTracks)
+                                subtitleTracks.add(track)
+                        }
                     }
                 }
             }

@@ -38,8 +38,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
+import com.subbyte.subcinema.models.Media
 import com.subbyte.subcinema.models.Subtitle
 import com.subbyte.subcinema.models.SubtitleType
+import com.subbyte.subcinema.models.VideoMetadata
 import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.ErrorUtil
 import com.subbyte.subcinema.utils.InputUtil
@@ -57,16 +59,12 @@ import jcifs.smb.SmbFileInputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.videolan.libvlc.LibVLC
-import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.MediaPlayer.TrackDescription
-import org.videolan.libvlc.interfaces.IMedia.Meta
-import org.videolan.libvlc.util.VLCVideoLayout
 import java.io.File
 import java.net.URLConnection
 
 @Composable
-fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subcinema.models.Media?) {
+fun MediaPlayerScreen(navController: NavHostController, media: Media?) {
 
     if (media?.mediaPath == null) return
     subtitleTracks.clear()
@@ -88,11 +86,8 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
     val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-            val libVlc = initLibVlc(navController.context)
-            val vlcView = initVlcView(navController.context)
-            val mediaPlayer = initMediaPlayer(libVlc, vlcView)
-            initMedia(media, libVlc, mediaPlayer)
-            VideoPlayer(libVlc, vlcView, mediaPlayer, media, ::navigateBack)
+
+            VideoPlayer(media, navController, ::navigateBack)
         }
         else if (mimeType.startsWith("image")) {
             ImagePlayer(media, navController, ::navigateBack)
@@ -101,22 +96,32 @@ fun MediaPlayerScreen(navController: NavHostController, media: com.subbyte.subci
 }
 
 @Composable
-fun VideoPlayer(
-    libVlc: LibVLC,
-    vlcView: VLCVideoLayout,
-    mediaPlayer: MediaPlayer,
-    videoMedia: com.subbyte.subcinema.models.Media,
-    navigateBack: () -> Unit
-) {
+fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBack: () -> Unit) {
 
     var mediaProgress by remember { mutableFloatStateOf(0F) }
+    fun setMediaProgress(value: Float) { mediaProgress = value }
     var mediaLength by remember { mutableLongStateOf(0) }
+    var mediaMetadata by remember { mutableStateOf(VideoMetadata(-1F, -1, -1, "")) }
 
     var showInfo by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
+
+    val libVlc = initLibVlc(navController.context)
+    val vlcView = initVlcView(navController.context)
+    val mediaPlayer = initMediaPlayer(libVlc, vlcView, ::setMediaProgress)
+    initMedia(videoMedia, libVlc, mediaPlayer)
+
+
     fun toggleInfo() {
+        mediaMetadata = VideoMetadata(
+            mediaPlayer.currentVideoTrack.frameRateNum / mediaPlayer.currentVideoTrack.frameRateDen.toFloat(),
+            mediaPlayer.currentVideoTrack.height,
+            mediaPlayer.currentVideoTrack.width,
+            mediaPlayer.currentVideoTrack.codec
+        )
         mediaLength = mediaPlayer.length
+
         showInfo = !showInfo
     }
     fun toggleMenu() {
@@ -149,7 +154,7 @@ fun VideoPlayer(
 
         if (showInfo) {
             VideoInfo(
-                mediaPlayer,
+                mediaMetadata,
                 videoMedia,
                 mediaLength,
                 mediaProgress
@@ -196,13 +201,12 @@ fun VideoPlayer(
 }
 @Composable
 fun VideoInfo(
-    mediaPlayer: MediaPlayer,
-    videoMedia: com.subbyte.subcinema.models.Media,
+    mediaMetadata: VideoMetadata,
+    videoMedia: Media,
     mediaLength: Long,
     mediaProgress: Float
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        val mediaTitle = mediaPlayer.media?.getMeta(Meta.Title) ?: ""
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -216,7 +220,7 @@ fun VideoInfo(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = mediaTitle,
+                    text = "${mediaMetadata.codec}\n${mediaMetadata.width} x ${mediaMetadata.height}\n${String.format("%.2f", mediaMetadata.frameRate)} FPS",
                     color = Color.White,
                 )
             }
@@ -246,7 +250,7 @@ fun VideoInfo(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "TEST2",
+                    text = "",
                     color = Color.White,
                 )
             }
@@ -360,12 +364,12 @@ fun VideoMenu(
 
 @Composable
 fun ImagePlayer(
-    imageMedia: com.subbyte.subcinema.models.Media,
+    imageMedia: Media,
     navController: NavHostController,
     navigateBack: () -> Unit
 ) {
 
-    val bitmap = remember { mutableStateOf<Bitmap>(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) }
+    val bitmap = remember { mutableStateOf(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) }
 
     when(imageMedia.mediaLocation) {
         EntryLocation.LOCAL -> {
