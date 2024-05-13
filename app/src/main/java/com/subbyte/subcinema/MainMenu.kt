@@ -1,10 +1,12 @@
 package com.subbyte.subcinema
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,15 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.items
 import androidx.tv.material3.Icon
-import androidx.tv.material3.NavigationDrawer
-import androidx.tv.material3.NavigationDrawerItem
-import androidx.tv.material3.Text
+import androidx.tv.material3.IconButton
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
@@ -41,92 +39,98 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
         else Screen.SmbEntryBrowser
     var currentScreen by remember { mutableStateOf(defaultSelection) }
 
-    NavigationDrawer(
-        drawerContent = {
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(12.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                TvLazyColumn(
+    Row (
+        modifier = Modifier
+            .fillMaxSize(),
+    ) {
+        val sideMenuWeight = 0.075f
+        Column(
+            modifier = Modifier
+                .weight(sideMenuWeight),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceAround
+        ) {
+            Spacer(modifier = Modifier.weight(0.1f).alpha(0F))
+
+            for(screen in screenList) {
+                Box(
                     modifier = Modifier
-                        .selectableGroup(),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically)
+                        .weight(0.5f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(screenList, key = { it.route }) { screen ->
-                        NavigationDrawerItem(
-                            modifier = (
+                    IconButton(
+                        modifier = (
                                 if (screen.title == Screen.Home.title) Modifier.focusRequester(homeMenuItemFocusRequester)
                                 else if (screen.title == Screen.SmbEntryBrowser.title) Modifier.focusRequester(smbentrybrowserMenuItemFocusRequester)
                                 else if (screen.title == Screen.LocalEntryBrowser.title) Modifier.focusRequester(localentrybrowserMenuItemFocusRequester)
                                 else Modifier
-                            ),
-                            selected = currentScreen == screen,
-                            onClick = { currentScreen = screen },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = screen.icon,
-                                    contentDescription = null,
-                                )
-                            }
-                        ) {
-                            Text(text = screen.title)
-                        }
-                    }
-                }
-
-                NavigationDrawerItem(
-                    modifier = Modifier.focusRequester(settingsMenuItemFocusRequester),
-                    selected = currentScreen == Screen.Settings,
-                    onClick = { currentScreen = Screen.Settings },
-                    leadingContent = {
+                                ),
+                        onClick = { currentScreen = screen }
+                    ) {
                         Icon(
-                            imageVector = Screen.Settings.icon,
+                            imageVector = if (currentScreen == screen) screen.iconSelected else screen.icon,
                             contentDescription = null,
                         )
                     }
-                ) {
-                    Text(text = Screen.Settings.title)
                 }
             }
-        }
-    ) {
 
-        /* switching screens based on currentScreen changes */
-        when (currentScreen) {
-            Screen.Home -> {
-                HomeScreen(navController)
-            }
-            Screen.LocalEntryBrowser -> {
-                EntryBrowserScreen(
-                    navController,
-                    EntryLocation.LOCAL,
-                    localentrybrowserMenuItemFocusRequester,
-                    if (pathLocation == EntryLocation.LOCAL) openPath else null
-                )
-            }
-            Screen.SmbEntryBrowser -> {
-                EntryBrowserScreen(
-                    navController,
-                    EntryLocation.SMB,
-                    smbentrybrowserMenuItemFocusRequester,
-                    if (pathLocation == EntryLocation.SMB) openPath else null
-                )
-            }
-            Screen.MediaPlayer -> {
-                MediaPlayerScreen(navController, null)
-            }
+            Spacer(modifier = Modifier.weight(1f))
 
-            Screen.Settings -> {
-                SettingsScreen(navController, settingsMenuItemFocusRequester)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    modifier = Modifier.focusRequester(settingsMenuItemFocusRequester),
+                    onClick = { currentScreen = Screen.Settings }
+                ) {
+                    Icon(
+                        imageVector = if (currentScreen == Screen.Settings) Screen.Settings.iconSelected else Screen.Settings.icon,
+                        contentDescription = null,
+                    )
+                }
             }
-
-            Screen.MainMenu -> {}
+            Spacer(modifier = Modifier.weight(0.1f))
         }
 
+        Column(
+            modifier = Modifier
+                .weight(1-sideMenuWeight),
+        ) {
+            /* switching screens based on currentScreen changes */
+            when (currentScreen) {
+                Screen.Home -> {
+                    HomeScreen(navController)
+                }
+                Screen.LocalEntryBrowser -> {
+                    EntryBrowserScreen(
+                        navController,
+                        EntryLocation.LOCAL,
+                        localentrybrowserMenuItemFocusRequester,
+                        if (pathLocation == EntryLocation.LOCAL) openPath else null
+                    )
+                }
+                Screen.SmbEntryBrowser -> {
+                    EntryBrowserScreen(
+                        navController,
+                        EntryLocation.SMB,
+                        smbentrybrowserMenuItemFocusRequester,
+                        if (pathLocation == EntryLocation.SMB) openPath else null
+                    )
+                }
+                Screen.MediaPlayer -> {
+                    MediaPlayerScreen(navController, null)
+                }
+
+                Screen.Settings -> {
+                    SettingsScreen(navController, settingsMenuItemFocusRequester)
+                }
+
+                Screen.MainMenu -> {}
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
