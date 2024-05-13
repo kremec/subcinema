@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -105,11 +106,13 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
 
     var showInfo by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showLoadingCircle by remember { mutableStateOf(true) }
+    fun hideLoadingCircle() { showLoadingCircle = false }
 
 
     val libVlc = initLibVlc(navController.context)
     val vlcView = initVlcView(navController.context)
-    val mediaPlayer = initMediaPlayer(libVlc, vlcView, ::setMediaProgress)
+    val mediaPlayer = initMediaPlayer(libVlc, vlcView, ::setMediaProgress, ::hideLoadingCircle)
     initMedia(videoMedia, libVlc, mediaPlayer)
 
 
@@ -151,6 +154,10 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
                 vlcView
             }
         )
+
+        if (showLoadingCircle) {
+            LoadingCircle()
+        }
 
         if (showInfo) {
             VideoInfo(
@@ -424,5 +431,17 @@ fun ImagePlayer(
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun LoadingCircle() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        CircularProgressIndicator()
     }
 }

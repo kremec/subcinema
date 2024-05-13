@@ -54,7 +54,8 @@ object VlcUtil {
     fun initMediaPlayer(
         libVlc: LibVLC,
         vlcView: VLCVideoLayout,
-        setMediaProgress: (Float) -> Unit
+        setMediaProgress: (Float) -> Unit,
+        hideLoadingCircle: () -> Unit
     ): MediaPlayer {
         return MediaPlayer(libVlc).apply {
             attachViews(vlcView, null, true, false)
@@ -65,6 +66,7 @@ object VlcUtil {
                     }
                     MediaPlayer.Event.Playing -> {
                         setSubtitles(this)
+                        hideLoadingCircle()
                     }
                 }
             }
