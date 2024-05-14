@@ -1,4 +1,5 @@
 package com.subbyte.subcinema.entrybrowser
+
 import android.os.Environment
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -46,9 +47,7 @@ class EntryBrowserViewModel() : ViewModel() {
     val entries: StateFlow<List<Entry>> = _entries
 
     private fun sortEntries(entries: MutableList<Entry>) {
-        entries.sortWith { entry1, entry2 ->
-            entry1.name.compareTo(entry2.name, ignoreCase = true)
-        }
+        entries.sortWith(compareBy({ it.isFile }, { it.name.lowercase() })) // Folders first, files second -> alphabetical
         for (i in entries.indices) entries[i].index = i
     }
 
@@ -70,17 +69,16 @@ class EntryBrowserViewModel() : ViewModel() {
                 }
                 else {
                     var index = 1
-
-                    result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/")))
+                    result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/"), false))
 
                     val directory = File(newPath)
                     val files = directory.listFiles()
+
                     if (files != null) {
                         for (i in files.indices) {
-                            result.add(Entry(index++, i, files[i].name, files[i].path.removeSuffix("/")))
+                            result.add(Entry(index++, i, files[i].name, files[i].path.removeSuffix("/"), files[i].isFile))
                         }
                     }
-
                     sortEntries(result)
 
                     _entries.value = result.toList()
@@ -104,18 +102,17 @@ class EntryBrowserViewModel() : ViewModel() {
                             return@withContext
                         }
                         else  {
+                            var index = 1
+                            result.add(Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', ""), false))
+
                             smbFile.connect()
                             val files = smbFile.listFiles()
 
-                            result.add(Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', "")))
-                            var index = 1
-
                             if (files != null) {
                                 for (i in files.indices) {
-                                    result.add(Entry(index++, i, files[i].name.removeSuffix("/"), files[i].path))
+                                    result.add(Entry(index++, i, files[i].name.removeSuffix("/"), files[i].path, files[i].isFile))
                                 }
                             }
-
                             sortEntries(result)
 
                             _entries.value = result.toList()

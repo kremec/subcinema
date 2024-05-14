@@ -4,5 +4,6 @@ data class Entry (
     var index: Int,
     val id: Int,
     val name: String,
-    val path: String
+    val path: String,
+    val isFile: Boolean
 )
