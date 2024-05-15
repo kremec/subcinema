@@ -109,6 +109,9 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
     var showLoadingCircle by remember { mutableStateOf(true) }
     fun hideLoadingCircle() { showLoadingCircle = false }
 
+    var isMuted by remember { mutableStateOf(false) }
+    var lastVolume by remember { mutableIntStateOf(0) }
+
 
     val libVlc = initLibVlc(navController.context)
     val vlcView = initVlcView(navController.context)
@@ -134,6 +137,17 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
     }
     fun togglePlay() {
         if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
+    }
+    fun toggleMute() {
+        if (isMuted) {
+            mediaPlayer.volume = lastVolume
+            isMuted = false
+        }
+        else {
+            lastVolume = mediaPlayer.volume
+            mediaPlayer.volume = 0
+            isMuted = true
+        }
     }
     fun updateMediaPlayerTime(ms: Long) {
         mediaProgress = (mediaPlayer.time.toFloat() + ms.toFloat()) / mediaPlayer.length.toFloat()
@@ -185,12 +199,15 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
                 when (it.keyCode) {
                     NativeKeyEvent.KEYCODE_DPAD_CENTER -> toggleInfo()
                     NativeKeyEvent.KEYCODE_MENU -> toggleMenu()
-                    NativeKeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> togglePlay()
+                    NativeKeyEvent.KEYCODE_MEDIA_PLAY -> togglePlay()
                     NativeKeyEvent.KEYCODE_DPAD_RIGHT -> updateMediaPlayerTime(30000)
                     NativeKeyEvent.KEYCODE_DPAD_LEFT -> updateMediaPlayerTime(-30000)
                     NativeKeyEvent.KEYCODE_DPAD_UP -> updateMediaPlayerTime(180000)
                     NativeKeyEvent.KEYCODE_DPAD_DOWN -> updateMediaPlayerTime(-180000)
                     NativeKeyEvent.KEYCODE_BACK -> exit()
+                    NativeKeyEvent.KEYCODE_VOLUME_UP -> mediaPlayer.volume += 10
+                    NativeKeyEvent.KEYCODE_VOLUME_DOWN -> mediaPlayer.volume -= 10
+                    NativeKeyEvent.KEYCODE_VOLUME_MUTE -> toggleMute()
 
                     NativeKeyEvent.KEYCODE_I -> toggleInfo()
                     NativeKeyEvent.KEYCODE_M -> toggleMenu()
