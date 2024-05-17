@@ -75,11 +75,11 @@ fun MediaPlayerScreen(navController: NavHostController, media: Media?) {
     fun navigateBack() {
         when (media.mediaLocation) {
             EntryLocation.LOCAL -> {
-                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.LOCAL.name}/${NavUtil.serializeArgument(media.mediaDirPath)}")
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.LOCAL.name}/${NavUtil.serializeArgument(media.mediaPath)}")
             }
 
             EntryLocation.SMB -> {
-                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.SMB.name}/${NavUtil.serializeArgument(media.mediaDirPath)}")
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.SMB.name}/${NavUtil.serializeArgument(media.mediaPath)}")
             }
         }
     }

@@ -58,13 +58,20 @@ class EntryBrowserViewModel() : ViewModel() {
         val mediaArg = Media(mediaPath, getEntryDirFromEntryPath(mediaPath, type.value), subtitlePaths, type.value)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
     }
-    fun openEntry(newPath: String, navController: NavHostController) {
+    fun openEntry(
+        newEntry: Entry,
+        navController: NavHostController,
+        doAfterOpen: (List<Entry>, String) -> Unit,
+        previousOpenEntryPath: String
+    ) {
+        val newPath = newEntry.path
         val result = mutableListOf<Entry>()
 
         when(type.value) {
             EntryLocation.LOCAL -> {
                 if (File(newPath).isFile) {
                     openMedia("file://$newPath", navController)
+                    doAfterOpen(result.toList(), previousOpenEntryPath)
                     return
                 }
                 else {
@@ -82,6 +89,7 @@ class EntryBrowserViewModel() : ViewModel() {
                     sortEntries(result)
 
                     _entries.value = result.toList()
+                    doAfterOpen(result.toList(), previousOpenEntryPath)
                 }
             }
 
@@ -99,6 +107,7 @@ class EntryBrowserViewModel() : ViewModel() {
                             withContext(Dispatchers.Main) {
                                 openMedia(newPath, navController)
                             }
+                            doAfterOpen(result.toList(), previousOpenEntryPath)
                             return@withContext
                         }
                         else  {
@@ -116,6 +125,9 @@ class EntryBrowserViewModel() : ViewModel() {
                             sortEntries(result)
 
                             _entries.value = result.toList()
+                            withContext(Dispatchers.Main) {
+                                doAfterOpen(result.toList(), previousOpenEntryPath)
+                            }
                         }
                     }
                 }

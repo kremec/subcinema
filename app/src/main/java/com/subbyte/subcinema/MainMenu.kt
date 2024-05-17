@@ -31,10 +31,10 @@ import com.subbyte.subcinema.utils.NavUtil.settingsMenuItemFocusRequester
 import com.subbyte.subcinema.utils.NavUtil.smbentrybrowserMenuItemFocusRequester
 
 @Composable
-fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, openPath: String?) {
+fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, openEntryPath: String?) {
 
     val defaultSelection: Screen =
-        if (openPath == null) Screen.Home
+        if (openEntryPath == null) Screen.Home
         else if (pathLocation == EntryLocation.LOCAL) Screen.LocalEntryBrowser
         else Screen.SmbEntryBrowser
     var currentScreen by remember { mutableStateOf(defaultSelection) }
@@ -109,7 +109,7 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
                         navController,
                         EntryLocation.LOCAL,
                         localentrybrowserMenuItemFocusRequester,
-                        if (pathLocation == EntryLocation.LOCAL) openPath else null
+                        if (pathLocation == EntryLocation.LOCAL) openEntryPath else null
                     )
                 }
                 Screen.SmbEntryBrowser -> {
@@ -117,7 +117,7 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
                         navController,
                         EntryLocation.SMB,
                         smbentrybrowserMenuItemFocusRequester,
-                        if (pathLocation == EntryLocation.SMB) openPath else null
+                        if (pathLocation == EntryLocation.SMB) openEntryPath else null
                     )
                 }
                 Screen.MediaPlayer -> {
@@ -134,7 +134,7 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
     }
 
     LaunchedEffect(Unit) {
-        if (openPath == null) homeMenuItemFocusRequester.requestFocus()
+        if (openEntryPath == null) homeMenuItemFocusRequester.requestFocus()
         else if (pathLocation == EntryLocation.LOCAL) {
             localentrybrowserMenuItemFocusRequester.requestFocus()
         }

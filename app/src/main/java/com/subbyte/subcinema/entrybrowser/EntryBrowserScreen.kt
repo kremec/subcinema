@@ -12,6 +12,7 @@ import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -31,13 +32,14 @@ import com.subbyte.subcinema.Screen
 import com.subbyte.subcinema.models.Entry
 import com.subbyte.subcinema.utils.EntryLocation
 import com.subbyte.subcinema.utils.SettingsUtil
+import com.subbyte.subcinema.utils.StorageUtil
 
 @Composable
 fun EntryBrowserScreen(
     navController: NavHostController,
     type: EntryLocation,
     menuItemFocusRequester: FocusRequester?,
-    openPath: String?
+    openEntryPath: String?
 ) {
 
     val entryBrowserViewModel: EntryBrowserViewModel = viewModel()
@@ -49,19 +51,32 @@ fun EntryBrowserScreen(
     val entriesState by entryBrowserViewModel.entries.collectAsState()
 
     val focusedEntryIndex = remember { mutableIntStateOf(0) }
-    val currentPage = remember { mutableIntStateOf(0) }
-    val startIndex = currentPage.intValue * entriesPerPage
+    val currentPage = focusedEntryIndex.intValue / entriesPerPage
+    val startIndex = currentPage * entriesPerPage
     val endIndex = (startIndex + entriesPerPage).coerceAtMost(entriesState.size)
     val pageEntries = entriesState.subList(startIndex, endIndex)
 
     val focusRequester = remember { FocusRequester() }
 
+    val previousOpenEntryPath = remember { mutableStateOf<String?>("") }
+    fun setIndexToPreviousDir(entries: List<Entry>, previousEntryPath: String) {
+        val openEntry = entries.find {
+            it.path == (previousOpenEntryPath.value?.removePrefix("file://") ?: "")
+        }
+        focusedEntryIndex.intValue = openEntry?.index ?: 0
+        previousOpenEntryPath.value = previousEntryPath
+    }
     fun openEntry(entry: Entry) {
         if (entry.path.length < rootPath.length) {
             navController.navigate(Screen.MainMenu.route)
         }
         else {
-            entryBrowserViewModel.openEntry(entry.path, navController)
+            entryBrowserViewModel.openEntry(
+                entry,
+                navController,
+                ::setIndexToPreviousDir,
+                entry.path
+            )
         }
     }
 
@@ -75,8 +90,6 @@ fun EntryBrowserScreen(
     }
     fun select() {
         openEntry(entriesState[focusedEntryIndex.intValue])
-        focusedEntryIndex.intValue = 0
-        currentPage.intValue = 0
     }
 
     TvLazyColumn (
@@ -94,7 +107,6 @@ fun EntryBrowserScreen(
 
                         NativeKeyEvent.KEYCODE_ENTER -> select()
                     }
-                    currentPage.intValue = focusedEntryIndex.intValue / entriesPerPage
                 }
                 true
             },
@@ -105,9 +117,27 @@ fun EntryBrowserScreen(
         }
     }
 
+    fun setIndexToOpenEntry(entries: List<Entry>, previousEntryPath: String) {
+        val openEntry = entries.find { it.path == previousEntryPath.removePrefix("file://") }
+        focusedEntryIndex.intValue = openEntry?.index ?: 0
+    }
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-        entryBrowserViewModel.openEntry(openPath ?: rootPath, navController)
+        if (openEntryPath != null) {
+            entryBrowserViewModel.openEntry(
+                Entry(-1, -1, "", StorageUtil.getEntryDirFromEntryPath(openEntryPath, type), false),
+                navController,
+                ::setIndexToOpenEntry,
+                openEntryPath
+            )
+        }
+        else
+            entryBrowserViewModel.openEntry(
+                Entry(-1, -1, "", rootPath, false),
+                navController,
+                ::setIndexToOpenEntry,
+                ""
+            )
     }
 }
 

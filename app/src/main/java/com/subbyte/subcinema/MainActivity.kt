@@ -80,13 +80,13 @@ fun AppNavHost(
         startDestination = startDestination,
     ) {
         composable(
-            route = "${Screen.MainMenu.route}/{pathlocation}/{openpath}",
+            route = "${Screen.MainMenu.route}/{pathlocation}/{openentrypath}",
             arguments = listOf(
                 navArgument("pathlocation") {
                     type = NavType.StringType
                     defaultValue = ""
                 },
-                navArgument("openpath") {
+                navArgument("openentrypath") {
                     type = NavType.StringType
                     defaultValue = ""
                 }
@@ -97,8 +97,8 @@ fun AppNavHost(
                 if (pathLocation.isNullOrBlank()) null
                 else if (pathLocation == EntryLocation.LOCAL.name) EntryLocation.LOCAL
                 else EntryLocation.SMB
-            val openPath = it.arguments?.getString("openpath", null)
-            MainMenu(navController, location, if (openPath.isNullOrBlank()) null else NavUtil.deserializeString(openPath))
+            val openEntryPath = it.arguments?.getString("openentrypath", null)
+            MainMenu(navController, location, if (openEntryPath.isNullOrBlank()) null else NavUtil.deserializeString(openEntryPath))
         }
 
         composable(Screen.Home.route) {
