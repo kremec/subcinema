@@ -68,7 +68,7 @@ fun EntryBrowserScreen(
     }
     fun openEntry(entry: Entry) {
         if (entry.path.length < rootPath.length) {
-            navController.navigate(Screen.MainMenu.route)
+            navController.navigate("${Screen.MainMenu.route}/ / ")
         }
         else {
             entryBrowserViewModel.openEntry(
@@ -91,6 +91,9 @@ fun EntryBrowserScreen(
     fun select() {
         openEntry(entriesState[focusedEntryIndex.intValue])
     }
+    fun goBack() {
+        openEntry(entriesState[0])
+    }
 
     TvLazyColumn (
         modifier = Modifier
@@ -104,8 +107,10 @@ fun EntryBrowserScreen(
                         NativeKeyEvent.KEYCODE_DPAD_UP -> moveUp()
                         NativeKeyEvent.KEYCODE_DPAD_CENTER -> select()
                         NativeKeyEvent.KEYCODE_DPAD_LEFT -> menuItemFocusRequester?.requestFocus()
+                        NativeKeyEvent.KEYCODE_BACK -> goBack()
 
                         NativeKeyEvent.KEYCODE_ENTER -> select()
+                        NativeKeyEvent.KEYCODE_ESCAPE -> goBack()
                     }
                 }
                 true

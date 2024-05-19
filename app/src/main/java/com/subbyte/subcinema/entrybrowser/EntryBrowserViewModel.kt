@@ -48,7 +48,7 @@ class EntryBrowserViewModel() : ViewModel() {
 
     private fun sortEntries(entries: MutableList<Entry>) {
         entries.sortWith(compareBy({ it.isFile }, { it.name.lowercase() })) // Folders first, files second -> alphabetical
-        for (i in entries.indices) entries[i].index = i
+        for (i in entries.indices) entries[i].index = i+1
     }
 
 
@@ -75,18 +75,16 @@ class EntryBrowserViewModel() : ViewModel() {
                     return
                 }
                 else {
-                    var index = 1
-                    result.add(Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/"), false))
-
                     val directory = File(newPath)
                     val files = directory.listFiles()
 
                     if (files != null) {
                         for (i in files.indices) {
-                            result.add(Entry(index++, i, files[i].name, files[i].path.removeSuffix("/"), files[i].isFile))
+                            result.add(Entry(-1, i, files[i].name, files[i].path.removeSuffix("/"), files[i].isFile))
                         }
                     }
                     sortEntries(result)
+                    result.add(0, Entry(0, -1, "..", newPath.replaceAfterLast('/', "").removeSuffix("/"), false))
 
                     _entries.value = result.toList()
                     doAfterOpen(result.toList(), previousOpenEntryPath)
@@ -111,18 +109,16 @@ class EntryBrowserViewModel() : ViewModel() {
                             return@withContext
                         }
                         else  {
-                            var index = 1
-                            result.add(Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', ""), false))
-
                             smbFile.connect()
                             val files = smbFile.listFiles()
 
                             if (files != null) {
                                 for (i in files.indices) {
-                                    result.add(Entry(index++, i, files[i].name.removeSuffix("/"), files[i].path, files[i].isFile))
+                                    result.add(Entry(-1, i, files[i].name.removeSuffix("/"), files[i].path, files[i].isFile))
                                 }
                             }
                             sortEntries(result)
+                            result.add(0, Entry(0, -1, "..", newPath.removeSuffix("/").replaceAfterLast('/', ""), false))
 
                             _entries.value = result.toList()
                             withContext(Dispatchers.Main) {
