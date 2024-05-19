@@ -1,6 +1,7 @@
 package com.subbyte.subcinema.ui.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 import androidx.tv.material3.lightColorScheme
@@ -14,7 +15,8 @@ fun SubcinemaTheme(
         darkColorScheme(
             primary = Purple80,
             secondary = PurpleGrey80,
-            tertiary = Pink80
+            tertiary = Pink80,
+            surface = Color.Black
         )
     } else {
         lightColorScheme(
