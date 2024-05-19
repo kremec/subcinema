@@ -1,5 +1,6 @@
 package com.subbyte.subcinema.entrybrowser
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Row
@@ -120,6 +121,9 @@ fun EntryBrowserScreen(
         items(pageEntries) { entry ->
             EntryRow(entry, focusedEntryIndex)
         }
+    }
+    BackHandler {
+        goBack()
     }
 
     fun setIndexToOpenEntry(entries: List<Entry>, previousEntryPath: String) {
