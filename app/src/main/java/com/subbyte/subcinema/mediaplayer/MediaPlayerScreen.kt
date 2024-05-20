@@ -160,7 +160,10 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
         navigateBack() // This is not an typo, without it it doesn't fully exit this screen
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
         AndroidView(
             modifier = Modifier
                 .fillMaxSize(),
