@@ -16,9 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Icon
 import androidx.tv.material3.IconButton
+import androidx.tv.material3.IconButtonDefaults
+import androidx.tv.material3.MaterialTheme
 import com.subbyte.subcinema.entrybrowser.EntryBrowserScreen
 import com.subbyte.subcinema.home.HomeScreen
 import com.subbyte.subcinema.mediaplayer.MediaPlayerScreen
@@ -59,17 +62,34 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
                         .weight(0.5f),
                     contentAlignment = Alignment.Center
                 ) {
+                    val modifier = when (screen.title) {
+                        Screen.Home.title -> Modifier.focusRequester(homeMenuItemFocusRequester)
+                        Screen.SmbEntryBrowser.title -> Modifier.focusRequester(smbentrybrowserMenuItemFocusRequester)
+                        Screen.LocalEntryBrowser.title -> Modifier.focusRequester(localentrybrowserMenuItemFocusRequester)
+                        else -> Modifier
+                    }
+                    var isFocused by remember { mutableStateOf(false) }
                     IconButton(
-                        modifier = (
-                                if (screen.title == Screen.Home.title) Modifier.focusRequester(homeMenuItemFocusRequester)
-                                else if (screen.title == Screen.SmbEntryBrowser.title) Modifier.focusRequester(smbentrybrowserMenuItemFocusRequester)
-                                else if (screen.title == Screen.LocalEntryBrowser.title) Modifier.focusRequester(localentrybrowserMenuItemFocusRequester)
-                                else Modifier
-                                ),
-                        onClick = { currentScreen = screen }
+                        modifier = modifier.onFocusChanged {
+                            isFocused = it.isFocused
+                        },
+                        onClick = { currentScreen = screen },
+                        scale =
+                            if (currentScreen == screen)
+                                IconButtonDefaults.scale(scale = 1.1f)
+                            else
+                                IconButtonDefaults.scale(),
+                        colors =
+                            if (currentScreen == screen)
+                                IconButtonDefaults.colors(
+                                    containerColor = MaterialTheme.colorScheme.onSurface,
+                                    contentColor = MaterialTheme.colorScheme.inverseOnSurface
+                                )
+                            else
+                                IconButtonDefaults.colors()
                     ) {
                         Icon(
-                            imageVector = if (currentScreen == screen) screen.iconSelected else screen.icon,
+                            imageVector = if (isFocused) screen.iconSelected else screen.icon,
                             contentDescription = null,
                         )
                     }
@@ -83,12 +103,30 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
+                var isFocused by remember { mutableStateOf(false) }
                 IconButton(
-                    modifier = Modifier.focusRequester(settingsMenuItemFocusRequester),
-                    onClick = { currentScreen = Screen.Settings }
+                    modifier = Modifier
+                        .focusRequester(settingsMenuItemFocusRequester)
+                        .onFocusChanged {
+                            isFocused = it.isFocused
+                        },
+                    onClick = { currentScreen = Screen.Settings },
+                    scale =
+                        if (currentScreen == Screen.Settings)
+                            IconButtonDefaults.scale(scale = 1.1f)
+                        else
+                            IconButtonDefaults.scale(),
+                    colors =
+                        if (currentScreen == Screen.Settings)
+                            IconButtonDefaults.colors(
+                                containerColor = MaterialTheme.colorScheme.onSurface,
+                                contentColor = MaterialTheme.colorScheme.inverseOnSurface
+                            )
+                        else
+                            IconButtonDefaults.colors()
                 ) {
                     Icon(
-                        imageVector = if (currentScreen == Screen.Settings) Screen.Settings.iconSelected else Screen.Settings.icon,
+                        imageVector = if (isFocused) Screen.Settings.iconSelected else Screen.Settings.icon,
                         contentDescription = null,
                     )
                 }
