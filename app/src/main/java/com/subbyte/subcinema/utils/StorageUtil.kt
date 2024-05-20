@@ -39,7 +39,6 @@ object StorageUtil {
             EntryLocation.LOCAL -> {
                 return entryPath.removePrefix("file://").replaceAfterLast('/', "").removeSuffix("/")
             }
-
             EntryLocation.SMB -> {
                 return entryPath.replaceAfterLast('/', "")
             }

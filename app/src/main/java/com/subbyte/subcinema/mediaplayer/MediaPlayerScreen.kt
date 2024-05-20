@@ -39,7 +39,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
 import androidx.tv.material3.Text
 import com.subbyte.subcinema.Screen
-import com.subbyte.subcinema.models.Media
+import com.subbyte.subcinema.models.Entry
 import com.subbyte.subcinema.models.Subtitle
 import com.subbyte.subcinema.models.SubtitleType
 import com.subbyte.subcinema.models.VideoMetadata
@@ -65,39 +65,38 @@ import java.io.File
 import java.net.URLConnection
 
 @Composable
-fun MediaPlayerScreen(navController: NavHostController, media: Media?) {
+fun MediaPlayerScreen(navController: NavHostController, entry: Entry?) {
 
-    if (media?.mediaPath == null) return
+    if (entry?.path == null) return
     subtitleTracks.clear()
     internalSubtitleTrackId.intValue = -1
     externalSubtitlePath.value = ""
 
     fun navigateBack() {
-        when (media.mediaLocation) {
+        when (entry.location) {
             EntryLocation.LOCAL -> {
-                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.LOCAL.name}/${NavUtil.serializeArgument(media.mediaPath)}")
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.LOCAL.name}/${NavUtil.serializeArgument(entry.path)}")
             }
 
             EntryLocation.SMB -> {
-                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.SMB.name}/${NavUtil.serializeArgument(media.mediaPath)}")
+                navController.navigate("${Screen.MainMenu.route}/${EntryLocation.SMB.name}/${NavUtil.serializeArgument(entry.path)}")
             }
         }
     }
 
-    val mimeType = URLConnection.guessContentTypeFromName(media.mediaPath)
+    val mimeType = URLConnection.guessContentTypeFromName(entry.path)
     if (mimeType != null) {
         if (mimeType.startsWith("video") || mimeType.startsWith("audio")) {
-
-            VideoPlayer(media, navController, ::navigateBack)
+            VideoPlayer(entry, navController, ::navigateBack)
         }
         else if (mimeType.startsWith("image")) {
-            ImagePlayer(media, navController, ::navigateBack)
+            ImagePlayer(entry, navController, ::navigateBack)
         }
     }
 }
 
 @Composable
-fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBack: () -> Unit) {
+fun VideoPlayer(videoEntry: Entry, navController: NavHostController, navigateBack: () -> Unit) {
 
     var mediaProgress by remember { mutableFloatStateOf(0F) }
     fun setMediaProgress(value: Float) { mediaProgress = value }
@@ -116,7 +115,7 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
     val libVlc = initLibVlc(navController.context)
     val vlcView = initVlcView(navController.context)
     val mediaPlayer = initMediaPlayer(libVlc, vlcView, ::setMediaProgress, ::hideLoadingCircle)
-    initMedia(videoMedia, libVlc, mediaPlayer)
+    initMedia(videoEntry, libVlc, mediaPlayer)
 
 
     fun toggleInfo() {
@@ -179,7 +178,7 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
         if (showInfo) {
             VideoInfo(
                 mediaMetadata,
-                videoMedia,
+                videoEntry,
                 mediaLength,
                 mediaProgress
             )
@@ -187,7 +186,7 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
         if (showMenu) {
             VideoMenu(
                 subtitleTracks.toList(),
-                videoMedia.subtitlePaths,
+                videoEntry.subtitlePaths,
                 ::toggleMenu,
                 ::exit
             )
@@ -229,7 +228,7 @@ fun VideoPlayer(videoMedia: Media, navController: NavHostController, navigateBac
 @Composable
 fun VideoInfo(
     mediaMetadata: VideoMetadata,
-    videoMedia: Media,
+    videoEntry: Entry,
     mediaLength: Long,
     mediaProgress: Float
 ) {
@@ -272,7 +271,7 @@ fun VideoInfo(
                         .fillMaxWidth()
                 )
                 Text(
-                    text = videoMedia.mediaPath.substringAfterLast("/"),
+                    text = videoEntry.path.substringAfterLast("/"),
                     color = Color.White,
                 )
             }
@@ -397,16 +396,16 @@ fun VideoMenu(
 
 @Composable
 fun ImagePlayer(
-    imageMedia: Media,
+    imageEntry: Entry,
     navController: NavHostController,
     navigateBack: () -> Unit
 ) {
 
     val bitmap = remember { mutableStateOf(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)) }
 
-    when(imageMedia.mediaLocation) {
+    when(imageEntry.location) {
         EntryLocation.LOCAL -> {
-            val imgFile = File(imageMedia.mediaPath.removePrefix("file://"))
+            val imgFile = File(imageEntry.path.removePrefix("file://"))
             val bitmapFile = BitmapFactory.decodeFile(imgFile.absolutePath)
             bitmap.value = BitmapDrawable(LocalContext.current.resources, bitmapFile).bitmap
         }
@@ -416,7 +415,7 @@ fun ImagePlayer(
             LaunchedEffect(Unit) {
                 scope.launch {
                     withContext(Dispatchers.IO) {
-                        val smbImgFile = StorageUtil.getSmbFile(imageMedia.mediaPath)
+                        val smbImgFile = StorageUtil.getSmbFile(imageEntry.path)
                         if (!smbImgFile.exists()) {
                             ErrorUtil.showToast(navController.context, "Image cannot be opened")
                             return@withContext

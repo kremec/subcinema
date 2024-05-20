@@ -55,7 +55,11 @@ fun EntryBrowserScreen(
     val currentPage = focusedEntryIndex.intValue / entriesPerPage
     val startIndex = currentPage * entriesPerPage
     val endIndex = (startIndex + entriesPerPage).coerceAtMost(entriesState.size)
-    val pageEntries = entriesState.subList(startIndex, endIndex)
+    val pageEntries =
+        if (entriesState.isNotEmpty())
+            entriesState.subList(startIndex, endIndex)
+        else
+            emptyList()
 
     val focusRequester = remember { FocusRequester() }
 
@@ -134,7 +138,10 @@ fun EntryBrowserScreen(
         focusRequester.requestFocus()
         if (openEntryPath != null) {
             entryBrowserViewModel.openEntry(
-                Entry(-1, -1, "", StorageUtil.getEntryDirFromEntryPath(openEntryPath, type), false),
+                Entry(
+                    path = StorageUtil.getEntryDirFromEntryPath(openEntryPath, type),
+                    location = type
+                ),
                 navController,
                 ::setIndexToOpenEntry,
                 openEntryPath
@@ -142,7 +149,10 @@ fun EntryBrowserScreen(
         }
         else
             entryBrowserViewModel.openEntry(
-                Entry(-1, -1, "", rootPath, false),
+                Entry(
+                    path = rootPath,
+                    location = type
+                ),
                 navController,
                 ::setIndexToOpenEntry,
                 ""

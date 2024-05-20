@@ -73,11 +73,11 @@ object VlcUtil {
         }
     }
     fun initMedia(
-        videoMedia: com.subbyte.subcinema.models.Media,
+        videoEntry: com.subbyte.subcinema.models.Entry,
         libVlc: LibVLC,
         mediaPlayer: MediaPlayer
     ) {
-        Media(libVlc, Uri.parse(videoMedia.mediaPath)).apply {
+        Media(libVlc, Uri.parse(videoEntry.path)).apply {
             parse()
             setEventListener {
                 when (it.type) {
