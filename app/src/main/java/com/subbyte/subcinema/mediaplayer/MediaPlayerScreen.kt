@@ -234,17 +234,22 @@ fun VideoInfo(
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .background(color = Color.Black),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val codec = mediaMetadata.codec
+            val width = mediaMetadata.width
+            val height = mediaMetadata.height
+            val frameRate = String.format("%.2f", mediaMetadata.frameRate)
             Column(
                 modifier = Modifier
                     .weight(0.25f),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "${mediaMetadata.codec}\n${mediaMetadata.width} x ${mediaMetadata.height}\n${String.format("%.2f", mediaMetadata.frameRate)} FPS",
+                    text = codec,
                     color = Color.White,
                 )
             }
@@ -274,7 +279,8 @@ fun VideoInfo(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "",
+                    text = "$width x $height\n" +
+                            "$frameRate FPS",
                     color = Color.White,
                 )
             }
