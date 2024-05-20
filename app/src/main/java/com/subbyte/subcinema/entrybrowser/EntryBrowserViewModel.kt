@@ -1,5 +1,6 @@
 package com.subbyte.subcinema.entrybrowser
 
+import android.content.Context
 import android.os.Environment
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,9 @@ class EntryBrowserViewModel() : ViewModel() {
         val mediaArg = Media(mediaPath, getEntryDirFromEntryPath(mediaPath, type.value), subtitlePaths, type.value)
         navController.navigate("${Screen.MediaPlayer.route}/${NavUtil.serializeArgument(mediaArg)}")
     }
+    fun showError(context: Context) {
+        ErrorUtil.showToast(context, "SMB path cannot be opened")
+    }
     fun openEntry(
         newEntry: Entry,
         navController: NavHostController,
@@ -92,15 +96,16 @@ class EntryBrowserViewModel() : ViewModel() {
             }
 
             EntryLocation.SMB -> {
-                var success = true
                 viewModelScope.launch {
                     withContext(Dispatchers.IO) {
                         val smbFile = StorageUtil.getSmbFile(newPath)
+
                         if (!smbFile.exists()) {
-                            success = false
+                            withContext(Dispatchers.Main) {
+                                showError(navController.context)
+                            }
                             return@withContext
                         }
-
                         if (smbFile.isFile) {
                             withContext(Dispatchers.Main) {
                                 openMedia(newPath, navController)
@@ -109,7 +114,15 @@ class EntryBrowserViewModel() : ViewModel() {
                             return@withContext
                         }
                         else  {
-                            smbFile.connect()
+                            try {
+                                smbFile.connect()
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    showError(navController.context)
+                                }
+                                return@withContext
+                            }
+
                             val files = smbFile.listFiles()
 
                             if (files != null) {
@@ -127,7 +140,6 @@ class EntryBrowserViewModel() : ViewModel() {
                         }
                     }
                 }
-                if (!success) ErrorUtil.showToast(navController.context, "SMB path cannot be opened")
             }
         }
     }
