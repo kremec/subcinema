@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,10 +32,12 @@ import com.subbyte.subcinema.utils.NavUtil.smbentrybrowserMenuItemFocusRequester
 @Composable
 fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, openEntryPath: String?) {
 
+    val defaultScreen: Screen = Screen.SmbEntryBrowser
     val defaultSelection: Screen =
-        if (openEntryPath == null) Screen.Home
+        if (openEntryPath == null) defaultScreen
         else if (pathLocation == EntryLocation.LOCAL) Screen.LocalEntryBrowser
-        else Screen.SmbEntryBrowser
+        else if (pathLocation == EntryLocation.SMB) Screen.SmbEntryBrowser
+        else defaultScreen
     var currentScreen by remember { mutableStateOf(defaultSelection) }
 
     Row (
@@ -130,16 +131,6 @@ fun MainMenu(navController: NavHostController, pathLocation: EntryLocation?, ope
 
                 Screen.MainMenu -> {}
             }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (openEntryPath == null) homeMenuItemFocusRequester.requestFocus()
-        else if (pathLocation == EntryLocation.LOCAL) {
-            localentrybrowserMenuItemFocusRequester.requestFocus()
-        }
-        else {
-            smbentrybrowserMenuItemFocusRequester.requestFocus()
         }
     }
 }
