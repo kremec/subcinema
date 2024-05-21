@@ -1,6 +1,6 @@
 # subcinema
 
-subcinema is a home theatre video player app, optimized for Android TV
+subcinema is a home theatre media player app, optimized for Android TV
 It supports viewing video, audio and image media from local storage and network (SMB/Samba) shares.
 
 ## Usage
