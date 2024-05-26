@@ -165,7 +165,7 @@ fun EntryRow(
     entry: Entry,
     focusedEntryIndex: MutableIntState,
 ) {
-    Row () {
+    Row {
         TextButton(
             modifier = Modifier
                 .fillMaxWidth(),

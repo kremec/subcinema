@@ -115,9 +115,14 @@ fun VideoPlayer(videoEntry: Entry, navController: NavHostController, navigateBac
     val libVlc = initLibVlc(navController.context)
     val vlcView = initVlcView(navController.context)
     val mediaPlayer = initMediaPlayer(libVlc, vlcView, ::setMediaProgress, ::hideLoadingCircle)
-    initMedia(videoEntry, libVlc, mediaPlayer)
 
 
+    fun togglePlay() {
+        if (mediaPlayer.isPlaying)
+            mediaPlayer.pause()
+        else
+            mediaPlayer.play()
+    }
     fun toggleInfo() {
         mediaMetadata = VideoMetadata(
             mediaPlayer.currentVideoTrack.frameRateNum / mediaPlayer.currentVideoTrack.frameRateDen.toFloat(),
@@ -133,9 +138,6 @@ fun VideoPlayer(videoEntry: Entry, navController: NavHostController, navigateBac
         showMenu = !showMenu
         if (showMenu)
             mediaPlayer.pause()
-    }
-    fun togglePlay() {
-        if (mediaPlayer.isPlaying) mediaPlayer.pause() else mediaPlayer.play()
     }
     fun toggleMute() {
         if (isMuted) {
@@ -194,6 +196,7 @@ fun VideoPlayer(videoEntry: Entry, navController: NavHostController, navigateBac
     }
 
     LaunchedEffect(Unit) {
+        initMedia(videoEntry, libVlc, mediaPlayer)
         mediaPlayer.play()
 
         InputUtil.keyDownEvents.collect {
@@ -221,6 +224,7 @@ fun VideoPlayer(videoEntry: Entry, navController: NavHostController, navigateBac
     }
     DisposableEffect(Unit) {
         onDispose {
+            mediaPlayer.release()
             libVlc.release()
         }
     }
@@ -334,7 +338,6 @@ fun VideoMenu(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
         modifier = Modifier
-            .fillMaxSize()
             .background(color = Color.Black),
     ) {
         TextButton(
