@@ -97,7 +97,8 @@ fun EntryBrowserScreen(
         openEntry(entriesState[focusedEntryIndex.intValue])
     }
     fun goBack() {
-        openEntry(entriesState[0])
+        if (entriesState.isNotEmpty())
+            openEntry(entriesState[0])
     }
 
     TvLazyColumn (
@@ -137,6 +138,7 @@ fun EntryBrowserScreen(
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
         if (openEntryPath != null) {
+            previousOpenEntryPath.value = StorageUtil.getEntryDirFromEntryPath(openEntryPath, type)
             entryBrowserViewModel.openEntry(
                 Entry(
                     path = StorageUtil.getEntryDirFromEntryPath(openEntryPath, type),
